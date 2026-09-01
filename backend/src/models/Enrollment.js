@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const enrollmentSchema = new mongoose.Schema(
   {
@@ -56,4 +56,4 @@ enrollmentSchema.index(
 
 const Enrollment = mongoose.model("Enrollment", enrollmentSchema);
 
-export default Enrollment;
+module.exports = Enrollment;

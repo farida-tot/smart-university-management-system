@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const scheduleSchema = new mongoose.Schema(
   {
@@ -101,4 +101,4 @@ sectionSchema.index(
 
 const Section = mongoose.model("Section", sectionSchema);
 
-export default Section;
+module.exports = Section;
