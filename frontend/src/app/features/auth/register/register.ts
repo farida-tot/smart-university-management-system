@@ -4,11 +4,12 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
 import { AuthService } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, NgbAlertModule],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
@@ -17,6 +18,7 @@ export class Register {
   registerForm;
   registrationError = '';
   registrationSuccess = '';
+  isSubmitting = false;
 
   constructor(private fb: FormBuilder, private authService: AuthService) {
 
@@ -57,6 +59,7 @@ export class Register {
     }
 
     const formData = this.registerForm.getRawValue();
+    this.isSubmitting = true;
 
     console.log('Sending:', formData);
 
@@ -64,11 +67,13 @@ export class Register {
       next: (response) => {
         console.log('Registration successful:', response);
         this.registrationSuccess = 'Registration successful. You can now log in.';
+        this.isSubmitting = false;
         this.registerForm.reset({ level: 1 });
       },
 
       error: (error) => {
         console.error('Registration failed:', error);
+        this.isSubmitting = false;
         this.registrationError = error.error?.message ??
           'Registration failed. Please try again.';
       }

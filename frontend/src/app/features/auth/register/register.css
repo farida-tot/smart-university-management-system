@@ -1,0 +1,211 @@
+:host {
+	display: block;
+}
+
+.register-page {
+	min-height: 100vh;
+	padding: 2rem 1rem;
+	display: grid;
+	place-items: center;
+	background: #edf2f1;
+}
+
+.register-shell {
+	width: min(1080px, 100%);
+	display: grid;
+	grid-template-columns: minmax(280px, .86fr) minmax(0, 1.14fr);
+	overflow: hidden;
+	border: 1px solid rgba(15, 48, 52, .12);
+	border-radius: 18px;
+	background: #fff;
+	box-shadow: 0 24px 70px rgba(15, 48, 52, .13);
+}
+
+.register-intro {
+	position: relative;
+	padding: clamp(2rem, 5vw, 4.5rem) clamp(1.5rem, 5vw, 4rem);
+	color: #f7fbf9;
+	background: #103c40;
+	overflow: hidden;
+}
+
+.register-intro::after {
+	content: "";
+	position: absolute;
+	width: 230px;
+	height: 230px;
+	right: -95px;
+	bottom: -90px;
+	border: 1px solid rgba(240, 181, 112, .45);
+	border-radius: 50%;
+	box-shadow: 0 0 0 22px rgba(240, 181, 112, .08), 0 0 0 44px rgba(240, 181, 112, .05);
+}
+
+.brand-mark {
+	width: 48px;
+	height: 48px;
+	display: grid;
+	place-items: center;
+	margin-bottom: 3rem;
+	border: 1px solid #f0b570;
+	border-radius: 12px;
+	color: #f0b570;
+	font-weight: 800;
+	letter-spacing: .08em;
+}
+
+.eyebrow {
+	margin: 0 0 .7rem;
+	color: #c5d5cf;
+	font-size: .72rem;
+	font-weight: 700;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+}
+
+.register-intro h1,
+.form-heading h2 {
+	margin: 0;
+	font-family: Georgia, 'Times New Roman', serif;
+	letter-spacing: 0;
+}
+
+.register-intro h1 {
+	max-width: 410px;
+	font-size: clamp(2.25rem, 4vw, 3.6rem);
+	line-height: 1.03;
+}
+
+.intro-copy {
+	max-width: 360px;
+	margin: 1.5rem 0 0;
+	color: #c5d5cf;
+	font-size: 1rem;
+	line-height: 1.7;
+}
+
+.intro-rule {
+	width: 56px;
+	height: 3px;
+	margin: 4rem 0 1.2rem;
+	background: #f0b570;
+}
+
+.intro-note {
+	max-width: 300px;
+	margin: 0;
+	color: #c5d5cf;
+	font-size: .86rem;
+	line-height: 1.6;
+}
+
+.register-form-wrap {
+	padding: clamp(1.5rem, 4vw, 3.5rem);
+}
+
+.form-heading {
+	margin-bottom: 2rem;
+}
+
+.form-heading .eyebrow {
+	color: #b16939;
+}
+
+.form-heading h2 {
+	color: #103c40;
+	font-size: clamp(1.9rem, 3vw, 2.5rem);
+}
+
+.form-heading > p:last-child {
+	margin: .6rem 0 0;
+	color: #667778;
+}
+
+.alert {
+	border-radius: 8px;
+	font-size: .9rem;
+}
+
+.form-label {
+	margin-bottom: .45rem;
+	color: #294548;
+	font-size: .82rem;
+	font-weight: 700;
+}
+
+.form-control,
+.form-select {
+	min-height: 48px;
+	border-color: #d2ddda;
+	border-radius: 7px;
+	color: #153d40;
+	background-color: #fbfdfc;
+}
+
+.form-control::placeholder {
+	color: #9aa9a7;
+}
+
+.form-control:focus,
+.form-select:focus {
+	border-color: #43827d;
+	box-shadow: 0 0 0 .2rem rgba(67, 130, 125, .16);
+}
+
+.register-button {
+	min-height: 50px;
+	margin-top: 2rem;
+	border: 0;
+	border-radius: 7px;
+	color: #fff;
+	background: #b16939;
+	font-weight: 700;
+	letter-spacing: .01em;
+}
+
+.register-button:hover:not(:disabled) {
+	color: #fff;
+	background: #92552e;
+}
+
+.register-button:focus-visible {
+	box-shadow: 0 0 0 .2rem rgba(177, 105, 57, .25);
+}
+
+.form-footnote {
+	margin: 1rem 0 0;
+	color: #82918f;
+	font-size: .75rem;
+	line-height: 1.5;
+	text-align: center;
+}
+
+@media (max-width: 700px) {
+	.register-page {
+		padding: 0;
+		display: block;
+	}
+
+	.register-shell {
+		min-height: 100vh;
+		grid-template-columns: 1fr;
+		border: 0;
+		border-radius: 0;
+	}
+
+	.register-intro {
+		padding: 2rem 1.5rem 2.25rem;
+	}
+
+	.brand-mark {
+		margin-bottom: 2rem;
+	}
+
+	.intro-rule {
+		margin-top: 2rem;
+	}
+
+	.register-form-wrap {
+		padding: 2.25rem 1.5rem 3rem;
+	}
+}

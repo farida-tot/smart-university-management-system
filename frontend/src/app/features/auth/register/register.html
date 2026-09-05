@@ -1,107 +1,102 @@
-<h2>Student Registration</h2>
-
-<form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-
-@if (registrationError) {
-  <p role="alert">{{ registrationError }}</p>
-}
-
-@if (registrationSuccess) {
-  <p role="status">{{ registrationSuccess }}</p>
-}
-
-<div>
-  <label>Name</label>
-
-  <input
-    type="text"
-    formControlName="name"
-  >
-
-  @if (
-    registerForm.controls.name.touched &&
-    registerForm.controls.name.hasError('required')
-  ) {
-    <p>Name is required.</p>
-  }
+<main class="register-page">
+  <section class="register-shell" aria-labelledby="registration-title">
+    <div class="register-intro">
+      <div class="brand-mark" aria-hidden="true">SU</div>
+      <p class="eyebrow">Smart University</p>
+      <h1 id="registration-title">Start your academic journey.</h1>
+      <p class="intro-copy">
+        Create your student account to access courses, attendance, and your university profile in one place.
+      </p>
+      <div class="intro-rule"></div>
+      <p class="intro-note">Already part of the university? Use your existing account to sign in.</p>
     </div>
 
-<div>
-  <label>Email</label>
+    <div class="register-form-wrap">
+      <div class="form-heading">
+        <p class="eyebrow">Student access</p>
+        <h2>Create your account</h2>
+        <p>All fields are required to complete registration.</p>
+      </div>
 
-  <input
-    type="email"
-    formControlName="email"
-  >
+      @if (registrationError) {
+        <ngb-alert type="danger" [dismissible]="false" role="alert">
+          {{ registrationError }}
+        </ngb-alert>
+      }
 
-  @if (
-    registerForm.controls.email.touched &&
-    registerForm.controls.email.hasError('required')
-  ) {
-    <p>Email is required.</p>
-  }
+      @if (registrationSuccess) {
+        <ngb-alert type="success" [dismissible]="false" role="status">
+          {{ registrationSuccess }}
+        </ngb-alert>
+      }
 
-  @if (
-    registerForm.controls.email.touched &&
-    registerForm.controls.email.hasError('email')
-  ) {
-    <p>Please enter a valid email.</p>
-  }
-</div>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="name">Full name</label>
+            <input id="name" class="form-control" [class.is-invalid]="registerForm.controls.name.touched && registerForm.controls.name.invalid" type="text" formControlName="name" autocomplete="name" placeholder="e.g. Amina Hassan">
+            @if (registerForm.controls.name.touched && registerForm.controls.name.hasError('required')) {
+              <div class="invalid-feedback">Name is required.</div>
+            }
+          </div>
 
-<div>
-  <label>Password</label>
+          <div class="col-12">
+            <label class="form-label" for="email">University email</label>
+            <input id="email" class="form-control" [class.is-invalid]="registerForm.controls.email.touched && registerForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email" placeholder="you@university.edu">
+            @if (registerForm.controls.email.touched && registerForm.controls.email.hasError('required')) {
+              <div class="invalid-feedback">Email is required.</div>
+            } @else if (registerForm.controls.email.touched && registerForm.controls.email.hasError('email')) {
+              <div class="invalid-feedback">Enter a valid email address.</div>
+            }
+          </div>
 
-  <input
-    type="password"
-    formControlName="password"
-  >
+          <div class="col-12">
+            <label class="form-label" for="password">Password</label>
+            <input id="password" class="form-control" [class.is-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid" type="password" formControlName="password" autocomplete="new-password" placeholder="At least 6 characters">
+            @if (registerForm.controls.password.touched && registerForm.controls.password.hasError('required')) {
+              <div class="invalid-feedback">Password is required.</div>
+            } @else if (registerForm.controls.password.touched && registerForm.controls.password.hasError('minlength')) {
+              <div class="invalid-feedback">Password must be at least 6 characters.</div>
+            }
+          </div>
 
-  @if (
-    registerForm.controls.password.touched &&
-    registerForm.controls.password.hasError('required')
-  ) {
-    <p>Password is required.</p>
-  }
+          <div class="col-md-7">
+            <label class="form-label" for="studentNumber">Student number</label>
+            <input id="studentNumber" class="form-control" [class.is-invalid]="registerForm.controls.studentNumber.touched && registerForm.controls.studentNumber.invalid" type="text" formControlName="studentNumber" autocomplete="off" placeholder="e.g. 2024001">
+            @if (registerForm.controls.studentNumber.touched && registerForm.controls.studentNumber.hasError('required')) {
+              <div class="invalid-feedback">Student number is required.</div>
+            }
+          </div>
 
-  @if (
-    registerForm.controls.password.touched &&
-    registerForm.controls.password.hasError('minlength')
-  ) {
-    <p>Password must be at least 6 characters.</p>
-  }
-</div>
+          <div class="col-md-5">
+            <label class="form-label" for="level">Level</label>
+            <select id="level" class="form-select" formControlName="level">
+              <option [ngValue]="1">Level 1</option>
+              <option [ngValue]="2">Level 2</option>
+              <option [ngValue]="3">Level 3</option>
+              <option [ngValue]="4">Level 4</option>
+            </select>
+          </div>
 
-  <div>
-    <label>Student Number</label>
-    <input type="text" formControlName="studentNumber">
-  </div>
+          <div class="col-12">
+            <label class="form-label" for="departmentId">Department ID</label>
+            <input id="departmentId" class="form-control" [class.is-invalid]="registerForm.controls.departmentId.touched && registerForm.controls.departmentId.invalid" type="text" formControlName="departmentId" autocomplete="off" placeholder="Paste your department ID">
+            @if (registerForm.controls.departmentId.touched && registerForm.controls.departmentId.hasError('required')) {
+              <div class="invalid-feedback">Department ID is required.</div>
+            }
+          </div>
+        </div>
 
-  <div>
-    <label>Department ID</label>
-    <input type="text" formControlName="departmentId">
-  </div>
-
-  <div>
-    <label>Level</label>
-    <select formControlName="level">
-      <option [ngValue]="1">1</option>
-      <option [ngValue]="2">2</option>
-      <option [ngValue]="3">3</option>
-      <option [ngValue]="4">4</option>
-    </select>
-
-    @if (
-      registerForm.controls.level.touched &&
-      (registerForm.controls.level.hasError('min') ||
-      registerForm.controls.level.hasError('max'))
-    ) {
-      <p>Level must be between 1 and 4.</p>
-    }
-  </div>
-
-  <button type="submit">
-    Register
-  </button>
-
-</form>
+        <button class="btn register-button w-100" type="submit" [disabled]="isSubmitting">
+          @if (isSubmitting) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            Creating account...
+          } @else {
+            Create student account
+          }
+        </button>
+        <p class="form-footnote">By registering, you confirm that the information provided is accurate.</p>
+      </form>
+    </div>
+  </section>
+</main>
