@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { RegisterRequest } from '../models/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +11,7 @@ export class AuthService {
 
   private apiUrl = 'http://localhost:3000/api/auth';
 
-  register(data: any) {
+  register(data: RegisterRequest) {
     return this.http.post(
       `${this.apiUrl}/register`,
       data

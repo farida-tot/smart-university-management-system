@@ -31,6 +31,12 @@ const register = async (req, res) => {
       });
     }
 
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters"
+      });
+    }
+
     if (level < 1 || level > 4) {
       return res.status(400).json({
         message: "Level must be between 1 and 4"
@@ -46,23 +52,26 @@ const register = async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedStudentNumber = studentNumber.trim();
 
-    const existingUser = await User.findOne({
-      email: normalizedEmail
-    });
+    const [existingUser, existingStudent] = await Promise.all([
+      User.findOne({ email: normalizedEmail }),
+      Student.findOne({ studentNumber: normalizedStudentNumber })
+    ]);
+
+    const conflictMessages = [];
 
     if (existingUser) {
-      return res.status(409).json({
-        message: "Email already exists"
-      });
+      conflictMessages.push(
+        "An account with this email already exists. Please log in instead."
+      );
     }
 
-    const existingStudent = await Student.findOne({
-      studentNumber: normalizedStudentNumber
-    });
-
     if (existingStudent) {
+      conflictMessages.push("Student number already exists.");
+    }
+
+    if (conflictMessages.length > 0) {
       return res.status(409).json({
-        message: "Student number already exists"
+        message: conflictMessages.join(" ")
       });
     }
 
@@ -94,6 +103,13 @@ const register = async (req, res) => {
       });
     } catch (error) {
       await User.findByIdAndDelete(user._id);
+
+      if (error.code === 11000 && error.keyPattern?.studentNumber) {
+        return res.status(409).json({
+          message: "Student number already exists"
+        });
+      }
+
       throw error;
     }
 
@@ -114,6 +130,20 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error("Registration error:", error);
+
+    if (error.code === 11000) {
+      if (error.keyPattern?.email) {
+        return res.status(409).json({
+          message: "An account with this email already exists. Please log in instead."
+        });
+      }
+
+      if (error.keyPattern?.studentNumber) {
+        return res.status(409).json({
+          message: "Student number already exists"
+        });
+      }
+    }
 
     res.status(500).json({
       message: "Server error during registration"

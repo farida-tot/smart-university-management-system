@@ -1,0 +1,107 @@
+<h2>Student Registration</h2>
+
+<form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+@if (registrationError) {
+  <p role="alert">{{ registrationError }}</p>
+}
+
+@if (registrationSuccess) {
+  <p role="status">{{ registrationSuccess }}</p>
+}
+
+<div>
+  <label>Name</label>
+
+  <input
+    type="text"
+    formControlName="name"
+  >
+
+  @if (
+    registerForm.controls.name.touched &&
+    registerForm.controls.name.hasError('required')
+  ) {
+    <p>Name is required.</p>
+  }
+    </div>
+
+<div>
+  <label>Email</label>
+
+  <input
+    type="email"
+    formControlName="email"
+  >
+
+  @if (
+    registerForm.controls.email.touched &&
+    registerForm.controls.email.hasError('required')
+  ) {
+    <p>Email is required.</p>
+  }
+
+  @if (
+    registerForm.controls.email.touched &&
+    registerForm.controls.email.hasError('email')
+  ) {
+    <p>Please enter a valid email.</p>
+  }
+</div>
+
+<div>
+  <label>Password</label>
+
+  <input
+    type="password"
+    formControlName="password"
+  >
+
+  @if (
+    registerForm.controls.password.touched &&
+    registerForm.controls.password.hasError('required')
+  ) {
+    <p>Password is required.</p>
+  }
+
+  @if (
+    registerForm.controls.password.touched &&
+    registerForm.controls.password.hasError('minlength')
+  ) {
+    <p>Password must be at least 6 characters.</p>
+  }
+</div>
+
+  <div>
+    <label>Student Number</label>
+    <input type="text" formControlName="studentNumber">
+  </div>
+
+  <div>
+    <label>Department ID</label>
+    <input type="text" formControlName="departmentId">
+  </div>
+
+  <div>
+    <label>Level</label>
+    <select formControlName="level">
+      <option [ngValue]="1">1</option>
+      <option [ngValue]="2">2</option>
+      <option [ngValue]="3">3</option>
+      <option [ngValue]="4">4</option>
+    </select>
+
+    @if (
+      registerForm.controls.level.touched &&
+      (registerForm.controls.level.hasError('min') ||
+      registerForm.controls.level.hasError('max'))
+    ) {
+      <p>Level must be between 1 and 4.</p>
+    }
+  </div>
+
+  <button type="submit">
+    Register
+  </button>
+
+</form>
