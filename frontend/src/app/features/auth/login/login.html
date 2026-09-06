@@ -1,0 +1,51 @@
+<main class="login-page">
+	<section class="login-shell" aria-labelledby="login-title">
+		<div class="login-intro">
+			<div class="brand-mark" aria-hidden="true"><span class="code-glyph">&lt;/&gt;</span><span>FCAI-NC</span></div>
+			<p class="eyebrow">Faculty of Computing and Artificial Intelligence · Nexa College</p>
+			<h1 id="login-title">Build what comes next.</h1>
+			<p class="intro-copy">Your academic home for computing courses, attendance, and student progress.</p>
+		</div>
+
+		<div class="login-form-wrap">
+			<div class="form-heading">
+				<p class="eyebrow">FCAI-NC student portal</p>
+				<h2>Sign in</h2>
+				<p>Access your computing studies and college records with your student account.</p>
+			</div>
+
+			@if (loginError) {
+				<div class="alert alert-danger" role="alert">{{ loginError }}</div>
+			}
+
+			<form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+				<div class="mb-3">
+					<label class="form-label" for="email">College email</label>
+					<input id="email" class="form-control" [class.is-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email" placeholder="e.g. 2024001@nu.edu">
+					@if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
+						<div class="invalid-feedback">Email is required.</div>
+					} @else if (loginForm.controls.email.touched && (loginForm.controls.email.hasError('email') || loginForm.controls.email.hasError('pattern'))) {
+						<div class="invalid-feedback">Use your student number followed by @nu.edu.</div>
+					}
+				</div>
+
+				<div>
+					<label class="form-label" for="password">Password</label>
+					<input id="password" class="form-control" [class.is-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid" type="password" formControlName="password" autocomplete="current-password">
+					@if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
+						<div class="invalid-feedback">Password is required.</div>
+					}
+				</div>
+
+				<button class="btn login-button w-100" type="submit" [disabled]="isSubmitting">
+					@if (isSubmitting) {
+						<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+						Signing in...
+					} @else {
+						Sign in
+					}
+				</button>
+			</form>
+		</div>
+	</section>
+</main>

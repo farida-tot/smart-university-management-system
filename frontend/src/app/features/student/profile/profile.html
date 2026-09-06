@@ -1,0 +1,97 @@
+<main class="profile-page">
+	<section class="profile-shell" aria-labelledby="profile-title">
+		<header class="profile-header">
+			<div class="brand-mark" aria-hidden="true"><span class="code-glyph">&lt;/&gt;</span><span>FCAI-NC</span></div>
+			<div>
+				<p class="eyebrow">Faculty of Computing and Artificial Intelligence · Nexa College</p>
+				<h1 id="profile-title">Student profile</h1>
+				<p class="header-copy">Your computing journey, in one place.</p>
+			</div>
+			@if (user) {
+				<div class="role-label">{{ user.role }}</div>
+			}
+		</header>
+
+		@if (isLoading) {
+			<div class="loading-state" role="status">
+				<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+				Loading your profile...
+			</div>
+		} @else {
+			@if (errorMessage) {
+				<div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+			}
+			@if (successMessage) {
+				<div class="alert alert-success" role="status">{{ successMessage }}</div>
+			}
+
+			<div class="profile-content">
+				<aside class="identity-panel">
+					<div class="avatar" aria-hidden="true">{{ initials }}</div>
+					<p class="eyebrow">Enrolled student</p>
+					<h2>{{ user?.name }}</h2>
+					<p class="identity-email">{{ user?.email }}</p>
+					<div class="identity-divider"></div>
+					<p class="student-number-label">Student number</p>
+					<p class="student-number">{{ student?.studentNumber }}</p>
+				</aside>
+
+				<div class="details-panel">
+					<div class="section-heading">
+						<p class="eyebrow">Account details</p>
+						<h2>Keep your contact information current</h2>
+						<p>Name and email can be updated here. Your academic record is managed by the college.</p>
+					</div>
+
+					<form [formGroup]="profileForm" (ngSubmit)="onSubmit()" novalidate>
+						<div class="row g-3">
+							<div class="col-12">
+								<label class="form-label" for="name">Full name</label>
+								<input id="name" class="form-control" [class.is-invalid]="profileForm.controls.name.touched && profileForm.controls.name.invalid" type="text" formControlName="name" autocomplete="name">
+								@if (profileForm.controls.name.touched && profileForm.controls.name.hasError('required')) {
+									<div class="invalid-feedback">Name is required.</div>
+								}
+							</div>
+
+							<div class="col-12">
+								<label class="form-label" for="email">College email</label>
+								<input id="email" class="form-control" [class.is-invalid]="profileForm.controls.email.touched && profileForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email">
+								@if (profileForm.controls.email.touched && profileForm.controls.email.hasError('required')) {
+									<div class="invalid-feedback">Email is required.</div>
+								} @else if (profileForm.controls.email.touched && profileForm.controls.email.hasError('email')) {
+									<div class="invalid-feedback">Enter a valid email address.</div>
+								}
+							</div>
+						</div>
+
+						<div class="academic-heading">
+							<p class="eyebrow">Academic record</p>
+							<span>Read-only</span>
+						</div>
+						<div class="academic-grid">
+							<div class="academic-item">
+								<span>Department</span>
+								<strong>{{ student?.department?.name ?? 'Not available' }}</strong>
+								<small>{{ student?.department?.code ?? '' }}</small>
+							</div>
+							<div class="academic-item">
+								<span>Current level</span>
+								<strong>Level {{ student?.level }}</strong>
+								<small>Undergraduate</small>
+							</div>
+						</div>
+
+						<button class="btn profile-button" type="submit" [disabled]="isSaving">
+							@if (isSaving) {
+								<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+								Saving changes...
+							} @else {
+								Save changes
+							}
+						</button>
+					</form>
+				</div>
+			</div>
+		}
+	</section>
+</main>
