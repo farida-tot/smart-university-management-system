@@ -5,13 +5,16 @@ const mongoose = require("mongoose");
 
 const authRoutes = require("./routes/authRoutes");
 const studentRoutes = require("./routes/studentRoutes");
-
+const instructorRoutes = require("./routes/instructorRoutes");
+const sectionRoutes = require("./routes/sectionRoutes");
 const app = express();
 
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/instructors", instructorRoutes);
+app.use("/api/sections", sectionRoutes);
 
 const PORT = process.env.PORT || 3000;
 
