@@ -75,6 +75,15 @@ const register = async (req, res) => {
       });
     }
 
+    if (
+      !/^[a-z0-9]+@nu\.edu$/.test(normalizedEmail) ||
+      normalizedEmail.split("@")[0] !== normalizedStudentNumber.toLowerCase()
+    ) {
+      return res.status(400).json({
+        message: "College email must match the student number, for example 2024001@nu.edu"
+      });
+    }
+
     const department = await Department.findById(departmentId);
 
     if (!department) {
@@ -164,6 +173,12 @@ const login = async (req, res) => {
 
     // 2. Normalize email
     const normalizedEmail = email.trim().toLowerCase();
+
+    if (!/^[a-z0-9]+@nu\.edu$/.test(normalizedEmail)) {
+      return res.status(400).json({
+        message: "Use your student number followed by @nu.edu"
+      });
+    }
 
     // 3. Find user
     // password is select:false in User schema,

@@ -1,15 +1,15 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { NgbAlertModule } from '@ng-bootstrap/ng-bootstrap';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, NgbAlertModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
@@ -20,14 +20,19 @@ export class Register {
   registrationSuccess = '';
   isSubmitting = false;
 
-  constructor(private fb: FormBuilder, private authService: AuthService) {
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private changeDetector: ChangeDetectorRef
+  ) {
 
     this.registerForm = this.fb.nonNullable.group({
       name: ['', Validators.required],
 
       email: ['', [
         Validators.required,
-        Validators.email
+        Validators.email,
+        Validators.pattern(/^[A-Za-z0-9]+@nu\.edu$/)
       ]],
 
       password: ['', [
@@ -59,6 +64,14 @@ export class Register {
     }
 
     const formData = this.registerForm.getRawValue();
+
+    if (formData.email.split('@')[0].toLowerCase() !== formData.studentNumber.trim().toLowerCase()) {
+      this.registerForm.controls.email.setErrors({ studentEmailMismatch: true });
+      this.registerForm.controls.email.markAsTouched();
+      this.registrationError = 'College email must match the student number, for example 2024001@nu.edu.';
+      return;
+    }
+
     this.isSubmitting = true;
 
     console.log('Sending:', formData);
@@ -69,6 +82,7 @@ export class Register {
         this.registrationSuccess = 'Registration successful. You can now log in.';
         this.isSubmitting = false;
         this.registerForm.reset({ level: 1 });
+        this.changeDetector.markForCheck();
       },
 
       error: (error) => {
@@ -76,6 +90,7 @@ export class Register {
         this.isSubmitting = false;
         this.registrationError = error.error?.message ??
           'Registration failed. Please try again.';
+        this.changeDetector.markForCheck();
       }
     });
   }

@@ -42,16 +42,25 @@
 }
 
 .brand-mark {
-	width: 48px;
-	height: 48px;
+	width: 76px;
+	height: 58px;
 	display: grid;
 	place-items: center;
+	align-content: center;
+	gap: .15rem;
 	margin-bottom: 3rem;
 	border: 1px solid #f0b570;
 	border-radius: 12px;
 	color: #f0b570;
 	font-weight: 800;
-	letter-spacing: .08em;
+	font-size: .68rem;
+	letter-spacing: .02em;
+}
+
+.code-glyph {
+	font-family: 'Courier New', monospace;
+	font-size: .8rem;
+	line-height: 1;
 }
 
 .eyebrow {
@@ -97,6 +106,17 @@
 	color: #c5d5cf;
 	font-size: .86rem;
 	line-height: 1.6;
+}
+
+.intro-note a {
+	color: #f0b570;
+	font-weight: 700;
+	text-decoration: underline;
+	text-underline-offset: .2em;
+}
+
+.intro-note a:hover {
+	color: #fff;
 }
 
 .register-form-wrap {

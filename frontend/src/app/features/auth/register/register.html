@@ -1,33 +1,29 @@
 <main class="register-page">
   <section class="register-shell" aria-labelledby="registration-title">
     <div class="register-intro">
-      <div class="brand-mark" aria-hidden="true">SU</div>
-      <p class="eyebrow">Smart University</p>
-      <h1 id="registration-title">Start your academic journey.</h1>
+      <div class="brand-mark" aria-hidden="true"><span class="code-glyph">&lt;/&gt;</span><span>FCAI-NC</span></div>
+      <p class="eyebrow">Faculty of Computing and Artificial Intelligence · Nexa College</p>
+      <h1 id="registration-title">Begin your work in computing.</h1>
       <p class="intro-copy">
-        Create your student account to access courses, attendance, and your university profile in one place.
+        Create your student account to access computing courses, attendance, and your college profile in one place.
       </p>
       <div class="intro-rule"></div>
-      <p class="intro-note">Already part of the university? Use your existing account to sign in.</p>
+      <p class="intro-note">Already part of FCAI-NC? <a routerLink="/login">Sign in to your account</a>.</p>
     </div>
 
     <div class="register-form-wrap">
       <div class="form-heading">
-        <p class="eyebrow">Student access</p>
+        <p class="eyebrow">FCAI-NC student portal</p>
         <h2>Create your account</h2>
-        <p>All fields are required to complete registration.</p>
+        <p>Set up your access to the college computing platform.</p>
       </div>
 
       @if (registrationError) {
-        <ngb-alert type="danger" [dismissible]="false" role="alert">
-          {{ registrationError }}
-        </ngb-alert>
+        <div class="alert alert-danger" role="alert">{{ registrationError }}</div>
       }
 
       @if (registrationSuccess) {
-        <ngb-alert type="success" [dismissible]="false" role="status">
-          {{ registrationSuccess }}
-        </ngb-alert>
+        <div class="alert alert-success" role="status">{{ registrationSuccess }}</div>
       }
 
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" novalidate>
@@ -41,12 +37,14 @@
           </div>
 
           <div class="col-12">
-            <label class="form-label" for="email">University email</label>
-            <input id="email" class="form-control" [class.is-invalid]="registerForm.controls.email.touched && registerForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email" placeholder="you@university.edu">
+            <label class="form-label" for="email">College email</label>
+            <input id="email" class="form-control" [class.is-invalid]="registerForm.controls.email.touched && registerForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email" placeholder="e.g. 2024001@nu.edu">
             @if (registerForm.controls.email.touched && registerForm.controls.email.hasError('required')) {
               <div class="invalid-feedback">Email is required.</div>
-            } @else if (registerForm.controls.email.touched && registerForm.controls.email.hasError('email')) {
-              <div class="invalid-feedback">Enter a valid email address.</div>
+            } @else if (registerForm.controls.email.touched && registerForm.controls.email.hasError('studentEmailMismatch')) {
+              <div class="invalid-feedback">Email must begin with your student number.</div>
+            } @else if (registerForm.controls.email.touched && (registerForm.controls.email.hasError('email') || registerForm.controls.email.hasError('pattern'))) {
+              <div class="invalid-feedback">Use your student number followed by @nu.edu.</div>
             }
           </div>
 
