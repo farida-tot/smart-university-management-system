@@ -17,7 +17,7 @@ export class Login {
   private readonly changeDetector = inject(ChangeDetectorRef);
 
   loginForm = this.formBuilder.nonNullable.group({
-    email: ['', [Validators.required, Validators.email, Validators.pattern(/^[A-Za-z0-9]+@nu\.edu$/)]],
+    email: ['', [Validators.required, Validators.email, Validators.pattern(/^[A-Za-z0-9]+@(stud\.nu\.edu|gov\.nu\.edu)$/)]],
     password: ['', Validators.required]
   });
   loginError = '';
@@ -50,7 +50,7 @@ export class Login {
     ).subscribe({
       next: (response) => {
         this.authService.saveSession(response);
-        this.router.navigate(['/profile']);
+        this.router.navigate([response.user.role === 'instructor' ? '/instructor/dashboard' : '/profile']);
       },
       error: (error) => {
         this.loginError = error.name === 'TimeoutError'

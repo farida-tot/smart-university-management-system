@@ -21,11 +21,11 @@
 			<form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
 				<div class="mb-3">
 					<label class="form-label" for="email">College email</label>
-					<input id="email" class="form-control" [class.is-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email" placeholder="e.g. 2024001@nu.edu">
+					  <input id="email" class="form-control" [class.is-invalid]="loginForm.controls.email.touched && loginForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email" placeholder="e.g. 2024001@stud.nu.edu or 1001@gov.nu.edu">
 					@if (loginForm.controls.email.touched && loginForm.controls.email.hasError('required')) {
 						<div class="invalid-feedback">Email is required.</div>
 					} @else if (loginForm.controls.email.touched && (loginForm.controls.email.hasError('email') || loginForm.controls.email.hasError('pattern'))) {
-						<div class="invalid-feedback">Use your student number followed by @nu.edu.</div>
+						<div class="invalid-feedback">Use your student or employee number followed by the appropriate college domain.</div>
 					}
 				</div>
 

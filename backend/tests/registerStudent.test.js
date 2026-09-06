@@ -51,7 +51,7 @@ test('register rejects a student when the department does not exist', async () =
     const req = {
       body: {
         name: 'Ali',
-        email: '2024001@nu.edu',
+        email: '2024001@stud.nu.edu',
         password: 'secret123',
         studentNumber: '2024001',
         departmentId: validDepartmentId,

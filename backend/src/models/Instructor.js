@@ -20,6 +20,11 @@ const instructorSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
       required: true
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true
     }
   },
   {

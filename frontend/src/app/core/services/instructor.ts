@@ -1,0 +1,26 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { InstructorDashboardResponse } from '../models/instructor';
+
+@Injectable({ providedIn: 'root' })
+export class InstructorService {
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = 'http://localhost:3000/api/instructors';
+
+  getDashboard(): Observable<InstructorDashboardResponse> {
+    return this.http.get<InstructorDashboardResponse>(`${this.apiUrl}/me/dashboard`);
+  }
+
+  recordAttendance(sectionId: string, data: { studentId: string; date: string; status: string }) {
+    return this.http.put(`${this.apiUrl}/me/sections/${sectionId}/attendance`, data);
+  }
+
+  recordCoursework(sectionId: string, studentId: string, marks: number) {
+    return this.http.put(`${this.apiUrl}/me/sections/${sectionId}/students/${studentId}/coursework`, { marks });
+  }
+
+  downloadAssignment(id: string): Observable<Blob> {
+    return this.http.get(`http://localhost:3000/api/assignments/${id}/download`, { responseType: 'blob' });
+  }
+}

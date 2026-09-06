@@ -76,11 +76,11 @@ const register = async (req, res) => {
     }
 
     if (
-      !/^[a-z0-9]+@nu\.edu$/.test(normalizedEmail) ||
+      !/^[a-z0-9]+@stud\.nu\.edu$/.test(normalizedEmail) ||
       normalizedEmail.split("@")[0] !== normalizedStudentNumber.toLowerCase()
     ) {
       return res.status(400).json({
-        message: "College email must match the student number, for example 2024001@nu.edu"
+        message: "Student email must match the student number, for example 2024001@stud.nu.edu"
       });
     }
 
@@ -174,12 +174,6 @@ const login = async (req, res) => {
     // 2. Normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
-    if (!/^[a-z0-9]+@nu\.edu$/.test(normalizedEmail)) {
-      return res.status(400).json({
-        message: "Use your student number followed by @nu.edu"
-      });
-    }
-
     // 3. Find user
     // password is select:false in User schema,
     // so explicitly select it here
@@ -191,6 +185,16 @@ const login = async (req, res) => {
       return res.status(401).json({
         message: "Invalid email or password"
       });
+    }
+
+    const validEmailDomain = user.role === "student"
+      ? /^[a-z0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
+      : user.role === "instructor"
+        ? /^[a-z0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
+        : true;
+
+    if (!validEmailDomain) {
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     // 4. Check if account is active

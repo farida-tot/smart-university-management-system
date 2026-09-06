@@ -1,4 +1,6 @@
 const express = require("express");
+const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/roleMiddleware");
 const router = express.Router();
 const {
   getAllSections,
@@ -9,11 +11,12 @@ const {
   getSectionsByInstructor,
 } = require("../controllers/sectionController");
 
-router.get("/", getAllSections);
-router.get("/:id", getSectionById);
-router.post("/", createSection);
-router.put("/:id", updateSection);
-router.delete("/:id", deleteSection);
-router.get("/instructor/:instructorId", getSectionsByInstructor);
+router.use(authMiddleware);
+router.get("/", roleMiddleware("admin"), getAllSections);
+router.get("/instructor/:instructorId", roleMiddleware("admin"), getSectionsByInstructor);
+router.get("/:id", roleMiddleware("admin", "instructor", "student"), getSectionById);
+router.post("/", roleMiddleware("admin"), createSection);
+router.put("/:id", roleMiddleware("admin"), updateSection);
+router.delete("/:id", roleMiddleware("admin"), deleteSection);
 
 module.exports = router;

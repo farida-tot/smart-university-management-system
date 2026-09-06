@@ -46,7 +46,7 @@ describe('Login', () => {
 
   it('saves the token and navigates to the profile after a successful login', () => {
     component.loginForm.setValue({
-      email: '2024001@nu.edu',
+      email: '2024001@stud.nu.edu',
       password: 'password123'
     });
 
@@ -60,7 +60,7 @@ describe('Login', () => {
       user: {
         id: 'user-1',
         name: 'Sara Mohamed Ahmed',
-        email: '2024001@nu.edu',
+        email: '2024001@stud.nu.edu',
         role: 'student'
       }
     });
@@ -71,7 +71,7 @@ describe('Login', () => {
 
   it('displays the API error when login fails', () => {
     component.loginForm.setValue({
-      email: '2024001@nu.edu',
+      email: '2024001@stud.nu.edu',
       password: 'wrong-password'
     });
 

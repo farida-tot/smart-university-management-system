@@ -1,0 +1,51 @@
+<main class="dashboard-page">
+  <header class="dashboard-header">
+    <div>
+      <p class="kicker">FCAI-NC / FACULTY WORKSPACE</p>
+      <h1>Good morning, {{ dashboard?.instructor?.userId?.name?.split(' ')?.[1] ?? 'Instructor' }}.</h1>
+      <p class="subhead">Your teaching load, student progress, and classroom rhythm in one place.</p>
+    </div>
+    @if (dashboard?.instructor; as instructor) {
+      <div class="identity-chip"><span class="avatar">{{ instructor.userId.name.slice(0, 1) }}</span><span><strong>{{ instructor.employeeNumber }}</strong><small>{{ instructor.departmentId.code }} faculty</small></span></div>
+    }
+  </header>
+
+  @if (loading) {
+    <div class="state-panel">Loading your teaching workspace...</div>
+  } @else if (errorMessage) {
+    <div class="state-panel error" role="alert">{{ errorMessage }}</div>
+  } @else {
+    @if (successMessage) { <div class="notice">{{ successMessage }}</div> }
+    <section class="metrics" aria-label="Teaching summary">
+      <article><span>Courses</span><strong>{{ dashboard.courses }}</strong><small>this semester</small></article>
+      <article><span>Sections</span><strong>{{ dashboard.totalSections }}</strong><small>assigned sections</small></article>
+      <article><span>Students</span><strong>{{ dashboard.totalStudents }}</strong><small>active enrolments</small></article>
+      <article><span>Department</span><strong>{{ dashboard.instructor.departmentId.code }}</strong><small>{{ dashboard.instructor.departmentId.name }}</small></article>
+    </section>
+
+    <section class="workspace">
+      <aside class="section-list">
+        <div class="section-list-heading"><p class="kicker">TEACHING LOAD</p><span>{{ dashboard.sections.length }} sections</span></div>
+        @for (item of dashboard.sections; track item.section._id) {
+          <button class="section-tab" [class.active]="activeSection?.section?._id === item.section._id" (click)="selectSection(item)">
+            <span class="section-code">{{ item.section.courseId.code }}</span><strong>{{ item.section.courseId.name }}</strong><small>{{ item.section.semester }} · {{ item.section.sectionNumber }}</small>
+          </button>
+        }
+      </aside>
+
+      @if (activeSection; as section) {
+        <div class="section-detail">
+          <header class="detail-header"><div><p class="kicker">{{ section.section.semester }} / SECTION {{ section.section.sectionNumber }}</p><h2>{{ section.section.courseId.code }} <span>{{ section.section.courseId.name }}</span></h2></div><div class="capacity"><strong>{{ section.students.length }}<small>/ {{ section.section.capacity }}</small></strong><span>enrolled</span></div></header>
+          <div class="schedule-row">@for (slot of section.section.schedule; track slot.day + slot.startTime) { <span><b>{{ slot.day.slice(0, 3) }}</b>{{ slot.startTime }}–{{ slot.endTime }} <em>{{ slot.room }}</em></span> }</div>
+          <div class="students-heading"><div><p class="kicker">ROSTER</p><h3>Student progress</h3></div><span>Coursework / 40</span></div>
+          <div class="table-wrap"><table><thead><tr><th>Student</th><th>Attendance today</th><th>Coursework</th></tr></thead><tbody>
+            @for (enrollment of section.students; track enrollment._id) {
+              <tr><td><strong>{{ enrollment.studentId.userId.name }}</strong><small>{{ enrollment.studentId.studentNumber }}</small></td><td><select [ngModel]="getAttendance(section, enrollment.studentId._id)" (ngModelChange)="saveAttendance(section, enrollment.studentId._id, $event)" [disabled]="savingKey === 'attendance-' + enrollment.studentId._id"><option value="">Mark status</option><option value="present">Present</option><option value="late">Late</option><option value="absent">Absent</option></select></td><td><div class="grade-input"><input #grade type="number" min="0" max="40" [value]="getGrade(section, enrollment.studentId._id) ?? ''" aria-label="Coursework mark"><span>/ 40</span><button type="button" (click)="saveGrade(section, enrollment.studentId._id, grade.value)" [disabled]="savingKey === 'grade-' + enrollment.studentId._id">Save</button></div></td></tr>
+            } @empty { <tr><td colspan="3" class="empty-cell">No active students in this section.</td></tr> }
+          </tbody></table></div>
+          <div class="assignments"><div><p class="kicker">COURSE MATERIALS</p><h3>Assignments</h3></div><div class="assignment-list">@for (assignment of section.assignments; track assignment._id) { <button type="button" (click)="downloadAssignment(assignment._id, assignment.originalName)"><span class="pdf">PDF</span><span><strong>{{ assignment.title }}</strong><small>{{ assignment.originalName }}</small></span><b>↓</b></button> } @empty { <p class="empty-copy">No assignments uploaded for this course yet.</p> }</div></div>
+        </div>
+      }
+    </section>
+  }
+</main>

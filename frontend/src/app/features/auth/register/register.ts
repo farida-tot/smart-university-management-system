@@ -32,7 +32,7 @@ export class Register {
       email: ['', [
         Validators.required,
         Validators.email,
-        Validators.pattern(/^[A-Za-z0-9]+@nu\.edu$/)
+        Validators.pattern(/^[A-Za-z0-9]+@stud\.nu\.edu$/)
       ]],
 
       password: ['', [
@@ -68,7 +68,7 @@ export class Register {
     if (formData.email.split('@')[0].toLowerCase() !== formData.studentNumber.trim().toLowerCase()) {
       this.registerForm.controls.email.setErrors({ studentEmailMismatch: true });
       this.registerForm.controls.email.markAsTouched();
-      this.registrationError = 'College email must match the student number, for example 2024001@nu.edu.';
+      this.registrationError = 'College email must match the student number, for example 2024001@stud.nu.edu.';
       return;
     }
 
