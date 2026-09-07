@@ -36,62 +36,17 @@
 					<p class="student-number">{{ student?.studentNumber }}</p>
 				</aside>
 
-				<div class="details-panel">
-					<div class="section-heading">
-						<p class="eyebrow">Account details</p>
-						<h2>Keep your contact information current</h2>
-						<p>Name and email can be updated here. Your academic record is managed by the college.</p>
-					</div>
-
-					<form [formGroup]="profileForm" (ngSubmit)="onSubmit()" novalidate>
-						<div class="row g-3">
-							<div class="col-12">
-								<label class="form-label" for="name">Full name</label>
-								<input id="name" class="form-control" [class.is-invalid]="profileForm.controls.name.touched && profileForm.controls.name.invalid" type="text" formControlName="name" autocomplete="name">
-								@if (profileForm.controls.name.touched && profileForm.controls.name.hasError('required')) {
-									<div class="invalid-feedback">Name is required.</div>
-								}
-							</div>
-
-							<div class="col-12">
-								<label class="form-label" for="email">College email</label>
-								<input id="email" class="form-control" [class.is-invalid]="profileForm.controls.email.touched && profileForm.controls.email.invalid" type="email" formControlName="email" autocomplete="email">
-								@if (profileForm.controls.email.touched && profileForm.controls.email.hasError('required')) {
-									<div class="invalid-feedback">Email is required.</div>
-								} @else if (profileForm.controls.email.touched && profileForm.controls.email.hasError('email')) {
-									<div class="invalid-feedback">Enter a valid email address.</div>
-								}
-							</div>
-						</div>
-
-						<div class="academic-heading">
-							<p class="eyebrow">Academic record</p>
-							<span>Read-only</span>
-						</div>
-						<div class="academic-grid">
-							<div class="academic-item">
-								<span>Department</span>
-								<strong>{{ student?.department?.name ?? 'Not available' }}</strong>
-								<small>{{ student?.department?.code ?? '' }}</small>
-							</div>
-							<div class="academic-item">
-								<span>Current level</span>
-								<strong>Level {{ student?.level }}</strong>
-								<small>Undergraduate</small>
-							</div>
-						</div>
-
-						<button class="btn profile-button" type="submit" [disabled]="isSaving">
-							@if (isSaving) {
-								<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-								Saving changes...
-							} @else {
-								Save changes
-							}
-						</button>
-					</form>
-				</div>
+				<div class="details-panel"><div class="section-heading"><p class="eyebrow">Student information</p><h2>Academic identity</h2><p>Your name, email, department, and level are maintained by the administration.</p></div><div class="academic-grid"><div class="academic-item"><span>Full name</span><strong>{{ user?.name }}</strong><small>{{ user?.email }}</small></div><div class="academic-item"><span>Department</span><strong>{{ student?.department?.name ?? 'Not available' }}</strong><small>{{ student?.department?.code ?? '' }}</small></div><div class="academic-item"><span>Student number</span><strong>{{ student?.studentNumber }}</strong><small>Official identifier</small></div><div class="academic-item"><span>Current level</span><strong>Level {{ student?.level }}</strong><small>Undergraduate</small></div></div></div>
 			</div>
+		}
+
+		@if (dashboard) {
+			<section class="courses-record" id="courses">
+				<div class="section-heading"><p class="eyebrow">Academic record</p><h2>Registered courses</h2><p>Your section, coursework progress, and final grade status.</p></div>
+				<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Course</th><th>Section</th><th>Credits</th><th>Coursework / 40</th><th>Final exam / 60</th><th>Total / 100</th><th>Final grade</th></tr></thead><tbody>
+				@for (enrollment of dashboard.enrollments; track enrollment._id) { <tr><td><strong>{{ enrollment.sectionId?.courseId?.code }}</strong><span>{{ enrollment.sectionId?.courseId?.name }}</span></td><td>{{ enrollment.sectionId?.sectionNumber }} · {{ enrollment.sectionId?.schedule?.[0]?.day }} Slot {{ enrollment.sectionId?.schedule?.[0]?.slot }}</td><td>{{ enrollment.sectionId?.courseId?.creditHours }}</td><td>{{ enrollment.courseworkMarks ?? 'In progress' }}</td><td>{{ enrollment.finalExamMarks ?? 'In progress' }}</td><td>{{ enrollment.totalMarks ?? 'In progress' }}</td><td><strong>{{ enrollment.finalGrade ?? 'In progress' }}</strong></td></tr> } @empty { <tr><td colspan="7" class="empty-row">No registered courses yet.</td></tr> }
+				</tbody></table></div>
+			</section>
 		}
 	</section>
 </main>

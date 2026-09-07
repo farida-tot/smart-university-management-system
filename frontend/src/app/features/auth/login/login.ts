@@ -50,7 +50,14 @@ export class Login {
     ).subscribe({
       next: (response) => {
         this.authService.saveSession(response);
-        this.router.navigate([response.user.role === 'instructor' ? '/instructor/dashboard' : '/profile']);
+        const destination = response.user.role === 'student'
+          ? '/'
+          : response.user.role === 'admin'
+          ? '/admin/dashboard'
+          : response.user.role === 'instructor'
+            ? '/instructor/dashboard'
+            : '/student/dashboard';
+        this.router.navigate([destination]);
       },
       error: (error) => {
         this.loginError = error.name === 'TimeoutError'

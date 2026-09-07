@@ -1,7 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { timeout } from 'rxjs';
-import { LoginRequest, LoginResponse, RegisterRequest } from '../models/auth';
+import { LoginRequest, LoginResponse } from '../models/auth';
 
 @Injectable({
   providedIn: 'root'
@@ -11,13 +11,7 @@ export class AuthService {
   private http = inject(HttpClient);
 
   private apiUrl = 'http://localhost:3000/api/auth';
-
-  register(data: RegisterRequest) {
-    return this.http.post(
-      `${this.apiUrl}/register`,
-      data
-    );
-  }
+  readonly currentUser = signal<LoginResponse['user'] | null>(this.readUser());
 
   login(data: LoginRequest) {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, data).pipe(
@@ -27,6 +21,8 @@ export class AuthService {
 
   saveSession(response: LoginResponse) {
     localStorage.setItem('smart-university-token', response.token);
+    localStorage.setItem('smart-university-user', JSON.stringify(response.user));
+    this.currentUser.set(response.user);
   }
 
   getToken() {
@@ -35,5 +31,13 @@ export class AuthService {
 
   clearSession() {
     localStorage.removeItem('smart-university-token');
+    localStorage.removeItem('smart-university-user');
+    this.currentUser.set(null);
+  }
+
+  private readUser(): LoginResponse['user'] | null {
+    const storedUser = localStorage.getItem('smart-university-user');
+    if (!storedUser) return null;
+    try { return JSON.parse(storedUser); } catch { return null; }
   }
 }

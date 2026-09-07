@@ -4,13 +4,13 @@ const mongoose = require("mongoose");
 
 const User = require("../models/User");
 const Student = require("../models/Student");
+const Instructor = require("../models/Instructor");
 const Department = require("../models/Department");
 
-const register = async (req, res) => {
+const createStudent = async (req, res) => {
   try {
     const {
       name,
-      email,
       password,
       studentNumber,
       departmentId,
@@ -19,7 +19,6 @@ const register = async (req, res) => {
 
     if (
       !name ||
-      !email ||
       !password ||
       !studentNumber ||
       !departmentId ||
@@ -27,7 +26,7 @@ const register = async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          "Name, email, password, student number, department ID, and level are required"
+          "Name, password, student number, department ID, and level are required"
       });
     }
 
@@ -49,8 +48,8 @@ const register = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
     const normalizedStudentNumber = studentNumber.trim();
+    const normalizedEmail = `${normalizedStudentNumber.toLowerCase()}@stud.nu.edu`;
 
     const [existingUser, existingStudent] = await Promise.all([
       User.findOne({ email: normalizedEmail }),
@@ -72,15 +71,6 @@ const register = async (req, res) => {
     if (conflictMessages.length > 0) {
       return res.status(409).json({
         message: conflictMessages.join(" ")
-      });
-    }
-
-    if (
-      !/^[a-z0-9]+@stud\.nu\.edu$/.test(normalizedEmail) ||
-      normalizedEmail.split("@")[0] !== normalizedStudentNumber.toLowerCase()
-    ) {
-      return res.status(400).json({
-        message: "Student email must match the student number, for example 2024001@stud.nu.edu"
       });
     }
 
@@ -123,7 +113,7 @@ const register = async (req, res) => {
     }
 
     res.status(201).json({
-      message: "Student registered successfully",
+      message: "Student account created successfully",
       user: {
         id: user._id,
         name: user.name,
@@ -138,12 +128,12 @@ const register = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Student creation error:", error);
 
     if (error.code === 11000) {
       if (error.keyPattern?.email) {
         return res.status(409).json({
-          message: "An account with this email already exists. Please log in instead."
+          message: "An account with this student number already exists"
         });
       }
 
@@ -155,8 +145,78 @@ const register = async (req, res) => {
     }
 
     res.status(500).json({
-      message: "Server error during registration"
+      message: "Server error while creating student account"
     });
+  }
+};
+
+const createInstructor = async (req, res) => {
+  try {
+    const { name, employeeNumber, password, departmentId } = req.body;
+    if (!name || !employeeNumber || !password || !departmentId) {
+      return res.status(400).json({ message: "Name, employee number, password, and department ID are required" });
+    }
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+    if (!await Department.exists({ _id: departmentId })) {
+      return res.status(400).json({ message: "Department not found" });
+    }
+
+    const normalizedEmployeeNumber = employeeNumber.trim().toLowerCase();
+    const email = `${normalizedEmployeeNumber}@gov.nu.edu`;
+    if (await User.exists({ email })) {
+      return res.status(409).json({ message: "An account with this employee number already exists" });
+    }
+
+    const user = await User.create({
+      name: name.trim(),
+      email,
+      password: await bcrypt.hash(password, 10),
+      role: "instructor"
+    });
+
+    try {
+      const instructor = await Instructor.create({
+        userId: user._id,
+        employeeNumber: employeeNumber.trim(),
+        departmentId
+      });
+      res.status(201).json({
+        message: "Instructor account created successfully",
+        user: { id: user._id, name: user.name, email: user.email, role: user.role },
+        instructor
+      });
+    } catch (error) {
+      await User.findByIdAndDelete(user._id);
+      throw error;
+    }
+  } catch (error) {
+    console.error("Instructor creation error:", error);
+    res.status(error.code === 11000 ? 409 : 400).json({
+      message: error.code === 11000 ? "Employee number already exists" : error.message
+    });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Current password and new password are required" });
+    }
+    if (typeof newPassword !== "string" || newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters" });
+    }
+    const user = await User.findById(req.user.userId).select("+password");
+    if (!user || !(await bcrypt.compare(currentPassword, user.password))) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error while changing password" });
   }
 };
 
@@ -189,9 +249,9 @@ const login = async (req, res) => {
 
     const validEmailDomain = user.role === "student"
       ? /^[a-z0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
-      : user.role === "instructor"
+      : user.role === "instructor" || user.role === "admin"
         ? /^[a-z0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
-        : true;
+        : false;
 
     if (!validEmailDomain) {
       return res.status(401).json({ message: "Invalid email or password" });
@@ -250,6 +310,8 @@ const login = async (req, res) => {
 };
 
 module.exports = {
-  register,
+  createStudent,
+  createInstructor,
+  changePassword,
   login
 };

@@ -23,4 +23,10 @@ export class Student {
   updateMyProfile(data: { name: string; email: string }): Observable<ProfileUpdateResponse> {
     return this.http.patch<ProfileUpdateResponse>(`${this.apiUrl}/me`, data);
   }
+
+  getDashboard() { return this.http.get<any>(`${this.apiUrl}/me/dashboard`); }
+  requestCourse(courseId: string) { return this.http.post(`${this.apiUrl}/me/courses/${courseId}/request`, {}); }
+  requestSection(sectionId: string) { return this.http.post(`${this.apiUrl}/me/sections/${sectionId}/request`, {}); }
+  getAssignments() { return this.http.get<any[]>('http://localhost:3000/api/assignments/student/me'); }
+  downloadAssignment(id: string) { return this.http.get(`http://localhost:3000/api/assignments/${id}/download`, { responseType: 'blob' }); }
 }

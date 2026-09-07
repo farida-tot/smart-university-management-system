@@ -1,0 +1,9 @@
+:host { display: block; }
+.site-nav { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0 5vw; border-bottom: 1px solid #d8ddd6; background: #fafaf7; color: #203f3d; }
+.site-nav a { color: inherit; text-decoration: none; }
+.site-nav div { display: flex; align-items: center; gap: 1.25rem; font-size: .9rem; }
+.brand { font: 700 1rem Georgia, serif; letter-spacing: .08em; }.brand span { color: #bf5a3f; font-size: .65em; }
+.nav-login { padding: .55rem .8rem; color: #fff !important; background: #203f3d; }
+.nav-logout { border: 0; padding: .55rem .8rem; color: #fff; background: #bf5a3f; cursor: pointer; font: inherit; }
+.site-footer { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 5vw; background: #203f3d; color: #d8e5df; font-size: .8rem; }.site-footer strong { color: #f0b570; }
+@media (max-width: 600px) { .site-nav div { gap: .6rem; font-size: .75rem; }.site-footer { flex-wrap: wrap; } }

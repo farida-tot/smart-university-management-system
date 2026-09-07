@@ -1,3 +1,5 @@
+:host { display: block; }
+.courses-record { margin-top: 1rem; padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid #d8ddd6; background: #fafaf7; }.courses-record .section-heading { margin-bottom: 1.25rem; }.courses-record h2 { margin: 0; font: 1.8rem Georgia, serif; }.courses-record .section-heading p:last-child, .courses-record .muted, .courses-record td span { color: #78908a; }.courses-record table { margin-bottom: 0; }.courses-record th { color: #78908a; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }.courses-record td { color: #203f3d; }.courses-record td strong, .courses-record td span { display: block; }.empty-row { color: #78908a; text-align: center; }
 :host {
 	display: block;
 }

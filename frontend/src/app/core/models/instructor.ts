@@ -29,11 +29,11 @@ export interface InstructorSection {
 }
 
 export interface CourseSummary { _id: string; code: string; name: string; creditHours: number; }
-export interface ScheduleEntry { day: string; startTime: string; endTime: string; room: string; }
+export interface ScheduleEntry { day: string; slot: number; startTime: string; endTime: string; room: string; }
 export interface EnrollmentSummary {
   _id: string;
   studentId: { _id: string; studentNumber: string; userId: { name: string; email: string } };
 }
 export interface AttendanceRecord { studentId: string; sectionId: string; date: string; status: 'present' | 'absent' | 'late'; }
-export interface CourseworkGrade { studentId: string; sectionId: string; marks: number; }
-export interface AssignmentSummary { _id: string; title: string; description: string; originalName: string; createdAt: string; }
+export interface CourseworkGrade { studentId: string; sectionId: string; courseworkMarks: number; finalExamMarks: number; totalMarks: number; finalGrade: string; }
+export interface AssignmentSummary { _id: string; title: string; description: string; originalName: string; deadline: string | null; createdAt: string; }

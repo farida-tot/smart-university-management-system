@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const User = require('../src/models/User');
 const Student = require('../src/models/Student');
 const Department = require('../src/models/Department');
-const { register } = require('../src/controllers/authController');
+const { createStudent } = require('../src/controllers/authController');
 
 const validDepartmentId = '507f1f77bcf86cd799439011';
 
@@ -25,7 +25,7 @@ const buildResponse = () => {
   return res;
 };
 
-test('register rejects a student when the department does not exist', async () => {
+test('admin student creation rejects a student when the department does not exist', async () => {
   const originalUserFindOne = User.findOne;
   const originalStudentFindOne = Student.findOne;
   const originalDepartmentFindById = Department.findById;
@@ -51,7 +51,6 @@ test('register rejects a student when the department does not exist', async () =
     const req = {
       body: {
         name: 'Ali',
-        email: '2024001@stud.nu.edu',
         password: 'secret123',
         studentNumber: '2024001',
         departmentId: validDepartmentId,
@@ -61,7 +60,7 @@ test('register rejects a student when the department does not exist', async () =
 
     const res = buildResponse();
 
-    await register(req, res);
+    await createStudent(req, res);
 
     assert.equal(res.statusCode, 400);
     assert.match(res.payload.message, /department/i);

@@ -1,11 +1,12 @@
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InstructorSection } from '../../../core/models/instructor';
 import { InstructorService } from '../../../core/services/instructor';
 
 @Component({
   selector: 'app-instructor-dashboard',
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -19,6 +20,10 @@ export class Dashboard {
   errorMessage = '';
   savingKey = '';
   successMessage = '';
+  assignmentTitle = '';
+  assignmentDescription = '';
+  assignmentDeadline = '';
+  assignmentFile: File | null = null;
 
   ngOnInit() { this.loadDashboard(); }
 
@@ -42,10 +47,6 @@ export class Dashboard {
 
   selectSection(section: InstructorSection) { this.activeSection = section; this.successMessage = ''; }
 
-  getGrade(section: InstructorSection, studentId: string) {
-    return section.courseworkGrades.find((grade) => grade.studentId === studentId)?.marks ?? null;
-  }
-
   getAttendance(section: InstructorSection, studentId: string) {
     const today = new Date().toISOString().slice(0, 10);
     return section.attendance.find((record) => record.studentId === studentId && record.date.slice(0, 10) === today)?.status ?? '';
@@ -60,15 +61,19 @@ export class Dashboard {
     });
   }
 
-  saveGrade(section: InstructorSection, studentId: string, marks: number | string) {
-    const value = Number(marks);
-    if (!Number.isFinite(value) || value < 0 || value > 40) return;
+  saveGrade(section: InstructorSection, studentId: string, courseworkMarks: number | string, finalExamMarks: number | string) {
+    const coursework = Number(courseworkMarks);
+    const finalExam = Number(finalExamMarks);
+    if (!Number.isInteger(coursework) || coursework < 1 || coursework > 40 || !Number.isInteger(finalExam) || finalExam < 1 || finalExam > 60) return;
     this.savingKey = `grade-${studentId}`;
-    this.instructorService.recordCoursework(section.section._id, studentId, value).subscribe({
+    this.instructorService.recordCoursework(section.section._id, studentId, coursework, finalExam).subscribe({
       next: () => { this.successMessage = 'Coursework mark saved.'; this.savingKey = ''; this.loadDashboard(); },
       error: (error) => { this.errorMessage = error.error?.message ?? 'Unable to save coursework mark.'; this.savingKey = ''; this.changeDetector.markForCheck(); }
     });
   }
+
+  getCoursework(section: InstructorSection, studentId: string) { return section.courseworkGrades.find((grade: any) => grade.studentId === studentId)?.courseworkMarks ?? ''; }
+  getFinalExam(section: InstructorSection, studentId: string) { return section.courseworkGrades.find((grade: any) => grade.studentId === studentId)?.finalExamMarks ?? ''; }
 
   assignmentUrl(id: string) { return `http://localhost:3000/api/assignments/${id}/download`; }
 
@@ -86,6 +91,15 @@ export class Dashboard {
         this.errorMessage = error.error?.message ?? 'Unable to download assignment.';
         this.changeDetector.markForCheck();
       }
+    });
+  }
+
+  selectAssignmentFile(event: Event) { this.assignmentFile = (event.target as HTMLInputElement).files?.[0] ?? null; }
+  uploadAssignment(section: InstructorSection) {
+    if (!this.assignmentTitle || !this.assignmentFile) return;
+    this.instructorService.uploadAssignment(section.section.courseId._id, this.assignmentTitle, this.assignmentDescription, this.assignmentDeadline, this.assignmentFile).subscribe({
+      next: () => { this.successMessage = 'Assignment uploaded.'; this.assignmentTitle = ''; this.assignmentDescription = ''; this.assignmentDeadline = ''; this.assignmentFile = null; this.loadDashboard(); },
+      error: error => { this.errorMessage = error.error?.message ?? 'Unable to upload assignment.'; this.changeDetector.markForCheck(); }
     });
   }
 }

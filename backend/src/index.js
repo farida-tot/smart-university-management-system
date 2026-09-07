@@ -11,6 +11,7 @@ const sectionRoutes = require("./routes/sectionRoutes");
 const assignmentRoutes = require("./routes/assignmentRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
 const courseRoutes = require("./routes/courseRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const app = express();
 app.use(cors());
 
@@ -23,6 +24,7 @@ app.use("/api/sections", sectionRoutes);
 app.use("/api/assignments", assignmentRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 3000;
 

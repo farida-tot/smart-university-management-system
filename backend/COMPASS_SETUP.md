@@ -39,9 +39,44 @@ node -e "require('bcryptjs').hash('Password123!', 10).then(console.log)"
 
 Copy the printed hash into the user's `password` field.
 
-## Instructor account
+## Admin account
 
-Create a `users` document first:
+The repository includes a convenience script at `backend/scripts/createAdmin.js`.
+It creates the following administrator when the account does not already exist:
+
+- Email: `admin@gov.nu.edu`
+- Password: `Admin123`
+- Role: `admin`
+
+From the `backend` directory, after configuring `MONGO_URI`, run:
+
+```powershell
+npm run create-admin
+```
+
+The script stores a bcrypt hash, not the plaintext password, and is safe to run
+again because it skips an existing `admin@gov.nu.edu` account. Set
+`ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env` to use different bootstrap
+credentials. The admin can also use the Angular admin dashboard at
+`/admin/dashboard` after signing in.
+
+- `/api/instructors`
+- `/api/courses` for create, update, and delete
+- `/api/sections` for create, update, and delete
+
+Courses can be viewed by all authenticated roles. Instructor and student
+operations are protected separately by the role middleware.
+
+## Instructor and student accounts
+
+The admin creates both account types from `/admin/dashboard`, or through these
+protected endpoints:
+
+- `POST /api/auth/instructors`
+- `POST /api/auth/students`
+
+
+For Compass-only setup, create an instructor `users` document first:
 
 ```json
 {
@@ -49,8 +84,6 @@ Create a `users` document first:
   "email": "1001@gov.nu.edu",
   "password": "PASTE_BCRYPT_HASH_HERE",
   "role": "instructor",
-  "isActive": true
-}
 ```
 
 Then create the linked `instructors` document:
@@ -66,11 +99,7 @@ Then create the linked `instructors` document:
 
 The instructor email must be exactly `employeeNumber@gov.nu.edu`.
 
-## Student accounts
-
-Students may use the registration page. Their email must be exactly `studentNumber@stud.nu.edu`.
-
-For manual insertion, create a student `users` document with `role: "student"`, then create the linked `students` document:
+For manual insertion, create a student `users` document with `role: "student"`, then create the linked `students` document. The password must be a bcrypt hash and the email must be exactly `studentNumber@stud.nu.edu`:
 
 ```json
 {
@@ -108,13 +137,16 @@ Create the section through `POST /api/sections` where possible, because the API 
   "schedule": [
     {
       "day": "Sunday",
-      "startTime": "09:00",
-      "endTime": "10:30",
+      "slot": 3,
       "room": "B201"
     }
   ]
 }
 ```
+
+Slots are fixed at 45 minutes: slot 1 is 08:00-08:45 and slot 14 is
+17:45-18:30. The API derives `startTime` and `endTime`; clients should send
+only `day`, `slot`, and `room`.
 
 `courseId + semester + sectionNumber` must be unique.
 
@@ -138,11 +170,22 @@ The dashboard only counts enrollments whose status is `enrolled`.
 ## Test sequence
 
 1. Start MongoDB and the backend.
-2. Log in as the instructor at `POST /api/auth/login`.
-3. Call `GET /api/instructors/me/dashboard` with the returned bearer token.
-4. Confirm the course, section, roster, and department appear.
-5. Record attendance with `PUT /api/instructors/me/sections/:sectionId/attendance`.
-6. Record coursework with `PUT /api/instructors/me/sections/:sectionId/students/:studentId/coursework`, using marks from `0` to `40`.
-7. Upload an assignment with `POST /api/assignments/courses/:courseId` as multipart form data using field name `file` and a PDF file.
+2. Run `npm run create-admin` from `backend`.
+3. Log in as the admin at `POST /api/auth/login` using `admin@gov.nu.edu` and `Admin123`.
+4. Open `/admin/dashboard` and create a department, instructor account, student account, course, and section. The section API rejects room, time, instructor, and department conflicts.
+5. Create an `enrollments` document in Compass with `status: "enrolled"`, linking the student and section.
+7. Log in as the instructor at `POST /api/auth/login`.
+8. Call `GET /api/instructors/me/dashboard` with the instructor bearer token. Confirm the course, section, roster, and department appear.
+9. Record attendance with `PUT /api/instructors/me/sections/:sectionId/attendance`.
+10. Record grades with `PUT /api/instructors/me/sections/:sectionId/students/:studentId/coursework`, using coursework marks from `1` to `40` and final exam marks from `1` to `60`. The API calculates the total and final letter grade.
+11. Upload an assignment with `POST /api/assignments/courses/:courseId` as multipart form data using field name `file` and a PDF file.
+12. Log in as the student and verify `GET /api/students/me` and the assignment list/download endpoints with the student bearer token.
+13. Start the Angular frontend with `npm start` from `frontend`, open `/instructor/dashboard`, and verify the instructor workflow in the browser.
+
+The instructor dashboard is implemented at `/instructor/dashboard`, and the
+student dashboard is available at `/student/dashboard`. The student profile is
+read-only and shows registered courses, sections, coursework, final exam marks,
+total marks, and final grades. Final grades use: A+ (90-100), A (85-89), B+
+(80-84), B (75-79), C+ (70-74), C (60-69), D (50-59), and F (below 50).
 
 The dashboard needs no seed file and will work with any manually created records that satisfy these relationships.

@@ -16,6 +16,13 @@ const scheduleSchema = new mongoose.Schema(
       required: true
     },
 
+    slot: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 14
+    },
+
     startTime: {
       type: String,
       required: true

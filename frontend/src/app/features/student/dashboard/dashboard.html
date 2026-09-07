@@ -1,0 +1,11 @@
+<main class="student-page">
+  @if (!dashboard) { <p class="state">Loading student dashboard...</p> } @else {
+    <header><p class="eyebrow">Student workspace</p><h1>{{ dashboard.user.name }}</h1><p>{{ dashboard.student.departmentId?.name }} · {{ dashboard.student.studentNumber }}</p></header>
+    @if (message) { <div class="notice">{{ message }}</div> } @if (error) { <div class="notice error">{{ error }}</div> }
+    <section class="metrics"><article><span>GPA</span><strong>{{ dashboard.gpa }}</strong></article><article><span>Credit hours</span><strong>{{ dashboard.creditHours }}</strong></article><article><span>Level</span><strong>{{ dashboard.student.level }}</strong></article></section>
+    <section class="student-grid"><div class="panel"><h2>My courses</h2>@for (course of dashboard.myCourses; track course._id) {<div class="row"><span><strong>{{ course.code }}</strong> {{ course.name }}<small>{{ course.creditHours }} credits · Approved</small></span>@if (course.sections?.length) {<small>{{ course.sections.length }} section(s) available</small>} @else {<small>Awaiting section</small>}</div>} @empty {<p class="muted">No approved courses yet.</p>}</div>
+      <div class="panel"><h2>Department courses</h2>@for (course of dashboard.courses; track course._id) {<div class="row"><span><strong>{{ course.code }}</strong> {{ course.name }} <small>{{ course.creditHours }} credits</small></span>@if (courseStatus(course._id)) {<b class="status">{{ courseStatus(course._id) }}</b>} @else {<button (click)="requestCourse(course._id)">Request approval</button>}</div>} @empty {<p class="muted">No courses available.</p>}</div>
+      <div class="panel wide"><h2>Available sections</h2>@for (section of dashboard.sections; track section._id) {@if (courseStatus(section.courseId?._id) === 'approved') {<div class="row"><span><strong>{{ section.courseId?.code }}</strong> {{ section.courseId?.name }} · {{ section.day }} Slot {{ section.slot }} · {{ section.capacity }} seats</span>@if (isEnrolled(section._id)) {<b class="status">requested</b>} @else {<button (click)="requestSection(section._id)">Request section</button>}</div>}}</div>
+    </section>
+  }
+</main>

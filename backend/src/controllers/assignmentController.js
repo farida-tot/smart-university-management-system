@@ -30,6 +30,7 @@ const uploadAssignment = async (req, res) => {
       uploadedBy: instructor._id,
       title: req.body.title,
       description: req.body.description || "",
+      deadline: req.body.deadline || null,
       originalName: req.file.originalname,
       storageName,
       filePath,
@@ -39,6 +40,19 @@ const uploadAssignment = async (req, res) => {
     res.status(201).json(assignment);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+const listMyAssignments = async (req, res) => {
+  try {
+    const student = await Student.findOne({ userId: req.user.userId });
+    if (!student) return res.status(404).json({ message: "Student profile not found" });
+    const enrollments = await Enrollment.find({ studentId: student._id, status: "enrolled" }).populate("sectionId");
+    const courseIds = enrollments.map((enrollment) => enrollment.sectionId?.courseId).filter(Boolean);
+    const assignments = await Assignment.find({ courseId: { $in: courseIds } }).populate("courseId uploadedBy").sort({ deadline: 1, createdAt: -1 });
+    res.status(200).json(assignments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -79,8 +93,8 @@ const downloadAssignment = async (req, res) => {
       status: "enrolled"
     }));
   }
+
   if (!allowed) return res.status(403).json({ message: "You are not registered for this course" });
-  res.download(assignment.filePath, assignment.originalName);
 };
 
-module.exports = { uploadAssignment, listCourseAssignments, downloadAssignment };
+module.exports = { uploadAssignment, listCourseAssignments, listMyAssignments, downloadAssignment };

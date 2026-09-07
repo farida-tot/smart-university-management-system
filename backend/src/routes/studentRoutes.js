@@ -5,7 +5,10 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 
 const {
   getMyProfile,
-  updateMyProfile
+  updateMyProfile,
+  getMyDashboard,
+  requestCourse,
+  requestSection
 } = require("../controllers/studentController");
 
 const router = express.Router();
@@ -23,5 +26,9 @@ router.patch(
   roleMiddleware("student"),
   updateMyProfile
 );
+
+router.get("/me/dashboard", authMiddleware, roleMiddleware("student"), getMyDashboard);
+router.post("/me/courses/:courseId/request", authMiddleware, roleMiddleware("student"), requestCourse);
+router.post("/me/sections/:sectionId/request", authMiddleware, roleMiddleware("student"), requestSection);
 
 module.exports = router;

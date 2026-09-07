@@ -1,6 +1,11 @@
 const Section = require("../models/Section");
 const Enrollment = require("../models/Enrollment");
-const { validateSection } = require("../utils/sectionValidation");
+const { validateSection, getSlotTimes } = require("../utils/sectionValidation");
+
+const normalizeSchedule = (schedule) => schedule?.map((entry) => ({
+  ...entry,
+  ...getSlotTimes(entry.slot)
+}));
 
 const getAllSections = async (req, res) => {
   try {
@@ -25,12 +30,13 @@ const getSectionById = async (req, res) => {
 
 const createSection = async (req, res) => {
   try {
-    const validationError = await validateSection(req.body, null);
+    const data = { ...req.body, schedule: normalizeSchedule(req.body.schedule) };
+    const validationError = await validateSection(data, null);
     if (validationError) {
       return res.status(400).json({ message: validationError });
     }
 
-    const newSection = new Section(req.body);
+    const newSection = new Section(data);
     await newSection.save();
     const section = await Section.findById(newSection._id).populate("courseId instructorId");
     res.status(201).json(section);
@@ -51,7 +57,7 @@ const updateSection = async (req, res) => {
       ...req.body,
       courseId: req.body.courseId || existingSection.courseId,
       instructorId: req.body.instructorId || existingSection.instructorId,
-      schedule: req.body.schedule || existingSection.schedule
+      schedule: normalizeSchedule(req.body.schedule || existingSection.schedule)
     };
     const validationError = await validateSection(candidate, req.params.id);
     if (validationError) {

@@ -212,9 +212,16 @@ const recordCourseworkGrade = async (req, res) => {
     if (!section) return res.status(404).json({ message: "Assigned section not found" });
     const enrollment = await Enrollment.findOne({ studentId: req.params.studentId, sectionId: section._id, status: "enrolled" });
     if (!enrollment) return res.status(400).json({ message: "Student is not enrolled in this section" });
+    const courseworkMarks = Number(req.body.courseworkMarks);
+    const finalExamMarks = Number(req.body.finalExamMarks);
+    if (!Number.isInteger(courseworkMarks) || courseworkMarks < 1 || courseworkMarks > 40 || !Number.isInteger(finalExamMarks) || finalExamMarks < 1 || finalExamMarks > 60) {
+      return res.status(400).json({ message: "Coursework must be 1-40 and final exam must be 1-60" });
+    }
+    const totalMarks = courseworkMarks + finalExamMarks;
+    const finalGrade = totalMarks >= 90 ? "A+" : totalMarks >= 85 ? "A" : totalMarks >= 80 ? "B+" : totalMarks >= 75 ? "B" : totalMarks >= 70 ? "C+" : totalMarks >= 60 ? "C" : totalMarks >= 50 ? "D" : "F";
     const grade = await CourseworkGrade.findOneAndUpdate(
       { studentId: req.params.studentId, sectionId: section._id },
-      { studentId: req.params.studentId, sectionId: section._id, marks: req.body.marks, recordedBy: instructor._id },
+      { studentId: req.params.studentId, sectionId: section._id, courseworkMarks, finalExamMarks, totalMarks, finalGrade, recordedBy: instructor._id },
       { new: true, upsert: true, runValidators: true }
     );
     res.status(200).json(grade);

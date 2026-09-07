@@ -5,6 +5,13 @@ const Section = require("../models/Section");
 const Enrollment = require("../models/Enrollment");
 const Department = require("../models/Department");
 
+const getSlotTimes = (slot) => {
+  const startMinutes = 8 * 60 + (Number(slot) - 1) * 45;
+  const endMinutes = startMinutes + 45;
+  const format = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  return { startTime: format(startMinutes), endTime: format(endMinutes) };
+};
+
 const toMinutes = (value) => {
   if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
     return null;
@@ -26,9 +33,16 @@ const validateSchedule = (schedule) => {
   }
 
   for (const entry of schedule) {
+    if (!Number.isInteger(Number(entry.slot)) || Number(entry.slot) < 1 || Number(entry.slot) > 14) {
+      return "Slot must be an integer from 1 to 14";
+    }
+    const slotTimes = getSlotTimes(entry.slot);
     const start = toMinutes(entry.startTime);
     const end = toMinutes(entry.endTime);
 
+    if (start !== null && end !== null && (start !== toMinutes(slotTimes.startTime) || end !== toMinutes(slotTimes.endTime))) {
+      return "Slot times must use the fixed 45-minute timetable";
+    }
     if (start === null || end === null || start >= end) {
       return "Schedule times must use HH:mm and end after start";
     }
@@ -124,6 +138,7 @@ const validateSection = async (data, sectionId) => {
 
 module.exports = {
   toMinutes,
+  getSlotTimes,
   schedulesOverlap,
   validateSchedule,
   validateSection

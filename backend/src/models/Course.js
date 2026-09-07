@@ -7,7 +7,8 @@ const courseSchema = new mongoose.Schema(
       required: [true, "Course code is required"],
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
+      match: [/^[A-Z]{2,5}[0-9]{2,4}$/, "Course code must look like CS01 or CS301"]
     },
 
     name: {

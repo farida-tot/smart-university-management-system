@@ -1,12 +1,3 @@
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-  studentNumber: string;
-  departmentId: string;
-  level: number;
-}
-
 export interface LoginRequest {
   email: string;
   password: string;

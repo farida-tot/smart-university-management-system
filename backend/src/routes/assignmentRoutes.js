@@ -5,6 +5,7 @@ const roleMiddleware = require("../middleware/roleMiddleware");
 const {
   uploadAssignment,
   listCourseAssignments,
+  listMyAssignments,
   downloadAssignment
 } = require("../controllers/assignmentController");
 
@@ -17,6 +18,7 @@ const router = express.Router();
 
 router.use(authMiddleware);
 router.post("/courses/:courseId", roleMiddleware("instructor"), upload.single("file"), uploadAssignment);
+router.get("/student/me", roleMiddleware("student"), listMyAssignments);
 router.get("/courses/:courseId", roleMiddleware("student", "instructor"), listCourseAssignments);
 router.get("/:id/download", roleMiddleware("student", "instructor"), downloadAssignment);
 
