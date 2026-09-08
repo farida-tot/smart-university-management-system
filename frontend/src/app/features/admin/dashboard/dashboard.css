@@ -9,13 +9,20 @@
 .admin-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; max-width: 1100px; margin-bottom: 1rem; background: #d2ddda; }.admin-stats article { display: grid; gap: .25rem; padding: 1rem; background: #fff; }.admin-stats span { color: #667778; font-size: .8rem; }.admin-stats strong { color: #183d40; font-size: 1.8rem; }
 .admin-panel { display: grid; gap: .75rem; padding: 1.35rem; border: 1px solid #d2ddda; border-radius: 8px; background: #fff; }
 .admin-panel h2 { margin: 0 0 .35rem; font-size: 1.55rem; }
-.admin-panel input, .admin-panel select { min-height: 44px; padding: .6rem .7rem; border: 1px solid #d2ddda; border-radius: 6px; background: #fbfdfc; }
+.admin-panel input, .admin-panel select, .admin-panel textarea { min-height: 44px; padding: .6rem .7rem; border: 1px solid #d2ddda; border-radius: 6px; background: #fbfdfc; font: inherit; color: #183d40; }
+.admin-panel textarea { min-height: 90px; resize: vertical; }
 .admin-panel button { min-height: 44px; border: 0; border-radius: 6px; color: #fff; background: #b16939; font-weight: 700; }
 .admin-panel button:disabled { opacity: .55; }
 .admin-panel small { color: #667778; }
 .split { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 .section-panel { grid-column: span 2; }
-.alert { max-width: 1100px; }
+.alert { position: fixed; top: 1rem; right: 1rem; z-index: 20; width: min(420px, calc(100vw - 2rem)); margin: 0; padding: .9rem 1rem; border: 1px solid; border-radius: 6px; box-shadow: 0 8px 24px rgb(24 61 64 / 18%); }
+.alert-success { border-color: #9bc7ad; background: #effaf2; color: #205c39; }
+.alert-danger { border-color: #e2aaaa; background: #fff2f1; color: #8b2d2d; }
+.admin-lists button { margin-right: .35rem; padding: .4rem .65rem; border: 1px solid #a9beb5; border-radius: 5px; color: #183d40; background: #fff; cursor: pointer; font-size: .78rem; font-weight: 700; transition: background .15s ease, border-color .15s ease, transform .15s ease; }
+.admin-lists button:hover { border-color: #183d40; background: #edf2f1; transform: translateY(-1px); }
+.admin-lists td:last-child button:last-child { border-color: #d9a4a0; color: #8b2d2d; background: #fff8f7; }
+.admin-lists td:last-child button:last-child:hover { border-color: #8b2d2d; background: #fceceb; }
 .admin-lists { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 1100px; margin-top: 1rem; }
 .admin-lists > div { padding: 1.35rem; border: 1px solid #d2ddda; border-radius: 8px; background: #fff; }
 .admin-lists h2 { margin: 0 0 .75rem; font-family: Georgia, 'Times New Roman', serif; font-size: 1.45rem; }

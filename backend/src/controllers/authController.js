@@ -30,7 +30,7 @@ const createStudent = async (req, res) => {
       });
     }
 
-    if (typeof password !== "string" || password.length < 6) {
+    if (typeof password !== "string" || password.trim() !== password || password.length < 6) {
       return res.status(400).json({
         message: "Password must be at least 6 characters"
       });
@@ -156,14 +156,17 @@ const createInstructor = async (req, res) => {
     if (!name || !employeeNumber || !password || !departmentId) {
       return res.status(400).json({ message: "Name, employee number, password, and department ID are required" });
     }
-    if (typeof password !== "string" || password.length < 6) {
+    if (typeof password !== "string" || password.trim() !== password || password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
     if (!await Department.exists({ _id: departmentId })) {
       return res.status(400).json({ message: "Department not found" });
     }
 
-    const normalizedEmployeeNumber = employeeNumber.trim().toLowerCase();
+    const normalizedEmployeeNumber = employeeNumber.trim().toLowerCase().replace(/@gov\.nu\.edu$/, "");
+    if (!/^[a-z0-9-]{2,12}$/.test(normalizedEmployeeNumber)) {
+      return res.status(400).json({ message: "Employee number must be 2-12 letters, numbers, or hyphens" });
+    }
     const email = `${normalizedEmployeeNumber}@gov.nu.edu`;
     if (await User.exists({ email })) {
       return res.status(409).json({ message: "An account with this employee number already exists" });
@@ -179,7 +182,7 @@ const createInstructor = async (req, res) => {
     try {
       const instructor = await Instructor.create({
         userId: user._id,
-        employeeNumber: employeeNumber.trim(),
+        employeeNumber: normalizedEmployeeNumber,
         departmentId
       });
       res.status(201).json({
@@ -225,7 +228,7 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     // 1. Validate input
-    if (!email || !password) {
+    if (!email || !password || typeof password !== "string" || password.length < 6) {
       return res.status(400).json({
         message: "Email and password are required"
       });

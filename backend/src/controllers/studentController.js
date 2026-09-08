@@ -5,6 +5,7 @@ const Section = require("../models/Section");
 const Enrollment = require("../models/Enrollment");
 const CourseRequest = require("../models/CourseRequest");
 const CourseworkGrade = require("../models/CourseworkGrade");
+const gradePointValues = { "A+": 4, A: 4, "A-": 3.7, "B+": 3.3, B: 3, "B-": 2.7, "C+": 2.3, C: 2, D: 1, F: 0 };
 
 const getMyProfile = async (req, res) => {
   try {
@@ -148,13 +149,16 @@ const getMyDashboard = async (req, res) => {
       data.courseworkMarks = grade?.courseworkMarks ?? null;
       data.finalExamMarks = grade?.finalExamMarks ?? null;
       data.totalMarks = grade?.totalMarks ?? null;
-      data.finalGrade = grade?.finalGrade ?? null;
+      data.finalGrade = enrollment.grade ?? grade?.finalGrade ?? null;
+      data.gradePoints = enrollment.gradePoints ?? (grade?.finalGrade ? gradePointValues[grade.finalGrade] : null);
+      data.result = data.finalGrade ? data.finalGrade === "F" ? "Failed" : "Passed" : null;
       return data;
     });
-    const active = enrollmentData.filter((item) => item.status === "enrolled");
+    const active = enrollmentData.filter((item) => ["enrolled", "completed"].includes(item.status));
     const graded = active.filter((item) => item.gradePoints !== null);
     const creditHours = active.reduce((total, item) => total + (item.sectionId?.courseId?.creditHours || 0), 0);
-    const gpa = graded.length ? graded.reduce((total, item) => total + item.gradePoints, 0) / graded.length : 0;
+    const gradedCreditHours = graded.reduce((total, item) => total + (item.sectionId?.courseId?.creditHours || 0), 0);
+    const gpa = gradedCreditHours ? graded.reduce((total, item) => total + item.gradePoints * (item.sectionId?.courseId?.creditHours || 0), 0) / gradedCreditHours : 0;
     const sections = await Section.find({ courseId: { $in: courses.map((course) => course._id) }, isActive: true }).populate("courseId instructorId");
     const myCourses = courseRequests.filter((request) => request.status === "approved").map((request) => ({
       ...request.courseId.toObject(),
@@ -189,9 +193,29 @@ const requestSection = async (req, res) => {
   const count = await Enrollment.countDocuments({ sectionId: section._id, status: { $in: ["pending", "enrolled"] } });
   if (count >= section.capacity) return res.status(409).json({ message: "This section is full" });
   try {
-    res.status(201).json(await Enrollment.create({ studentId: student._id, sectionId: section._id, status: "pending" }));
+    const existingRequest = await Enrollment.findOne({ studentId: student._id, sectionId: section._id });
+    const enrollment = existingRequest
+      ? await Enrollment.findByIdAndUpdate(existingRequest._id, { status: "pending", enrolledAt: new Date() }, { new: true, runValidators: true })
+      : await Enrollment.create({ studentId: student._id, sectionId: section._id, status: "pending" });
+    res.status(201).json(enrollment);
   } catch (error) {
     res.status(error.code === 11000 ? 409 : 400).json({ message: error.code === 11000 ? "Section request already exists" : error.message });
+  }
+};
+
+const dropEnrollment = async (req, res) => {
+  try {
+    const student = await Student.findOne({ userId: req.user.userId });
+    const enrollment = student && await Enrollment.findOne({ studentId: student._id, _id: req.params.id });
+    if (!enrollment) return res.status(404).json({ message: "Enrollment not found" });
+    if (!["pending", "enrolled"].includes(enrollment.status)) {
+      return res.status(400).json({ message: "This enrollment cannot be dropped" });
+    }
+    enrollment.status = "dropped";
+    await enrollment.save();
+    res.status(200).json(enrollment);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
 
@@ -200,5 +224,6 @@ module.exports = {
   updateMyProfile,
   getMyDashboard,
   requestCourse,
-  requestSection
+  requestSection,
+  dropEnrollment
 };

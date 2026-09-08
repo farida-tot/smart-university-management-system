@@ -12,6 +12,9 @@ export class InstructorService {
     return this.http.get<InstructorDashboardResponse>(`${this.apiUrl}/me/dashboard`);
   }
 
+  getMyProfile() { return this.http.get<any>(`${this.apiUrl}/me`); }
+  updateMyProfile(data: { name?: string; email?: string }) { return this.http.patch(`${this.apiUrl}/me`, data); }
+
   recordAttendance(sectionId: string, data: { studentId: string; date: string; status: string }) {
     return this.http.put(`${this.apiUrl}/me/sections/${sectionId}/attendance`, data);
   }

@@ -14,5 +14,9 @@ export class StudentDashboard implements OnInit {
   requestCourse(id: string) { this.studentService.requestCourse(id).subscribe({ next: () => { this.message = 'Course request sent to the admin.'; this.load(); }, error: error => this.error = error.error?.message ?? 'Unable to request this course.' }); }
   requestSection(id: string) { this.studentService.requestSection(id).subscribe({ next: () => { this.message = 'Section request sent to the admin.'; this.load(); }, error: error => this.error = error.error?.message ?? 'Unable to request this section.' }); }
   courseStatus(id: string) { return this.dashboard?.courseRequests?.find((request: any) => request.courseId?._id === id)?.status; }
-  isEnrolled(id: string) { return this.dashboard?.enrollments?.some((item: any) => item.sectionId?._id === id && ['pending', 'enrolled'].includes(item.status)); }
+  enrollmentStatus(id: string) { return this.dashboard?.enrollments?.find((item: any) => item.sectionId?._id === id)?.status ?? null; }
+  enrollmentLabel(id: string) {
+    const status = this.enrollmentStatus(id);
+    return status === 'enrolled' ? 'Approved' : status === 'rejected' ? 'Rejected' : 'Requested';
+  }
 }

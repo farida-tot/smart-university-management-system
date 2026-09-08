@@ -18,7 +18,7 @@ export class Login {
 
   loginForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email, Validators.pattern(/^[A-Za-z0-9]+@(stud\.nu\.edu|gov\.nu\.edu)$/)]],
-    password: ['', Validators.required]
+    password: ['', [Validators.required, Validators.minLength(6)]]
   });
   loginError = '';
   isSubmitting = false;

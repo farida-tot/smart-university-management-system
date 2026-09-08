@@ -27,6 +27,7 @@ export class Student {
   getDashboard() { return this.http.get<any>(`${this.apiUrl}/me/dashboard`); }
   requestCourse(courseId: string) { return this.http.post(`${this.apiUrl}/me/courses/${courseId}/request`, {}); }
   requestSection(sectionId: string) { return this.http.post(`${this.apiUrl}/me/sections/${sectionId}/request`, {}); }
+  dropEnrollment(enrollmentId: string) { return this.http.patch(`${this.apiUrl}/me/enrollments/${enrollmentId}/drop`, {}); }
   getAssignments() { return this.http.get<any[]>('http://localhost:3000/api/assignments/student/me'); }
   downloadAssignment(id: string) { return this.http.get(`http://localhost:3000/api/assignments/${id}/download`, { responseType: 'blob' }); }
 }

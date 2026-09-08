@@ -13,16 +13,14 @@ const {
   deleteDepartment
 } = require("../controllers/departmentController");
 
-router.use(authMiddleware);
+router.get("/", getAllDepartments);
 
-router.get("/", roleMiddleware("admin"), getAllDepartments);
+router.get("/:id", getDepartmentById);
 
-router.get("/:id", roleMiddleware("admin"), getDepartmentById);
+router.post("/", authMiddleware, roleMiddleware("admin"), createDepartment);
 
-router.post("/", roleMiddleware("admin"), createDepartment);
+router.put("/:id", authMiddleware, roleMiddleware("admin"), updateDepartment);
 
-router.put("/:id", roleMiddleware("admin"), updateDepartment);
-
-router.delete("/:id", roleMiddleware("admin"), deleteDepartment);
+router.delete("/:id", authMiddleware, roleMiddleware("admin"), deleteDepartment);
 
 module.exports = router;

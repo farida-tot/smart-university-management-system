@@ -34,6 +34,8 @@
 					<input id="password" class="form-control" [class.is-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid" type="password" formControlName="password" autocomplete="current-password">
 					@if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
 						<div class="invalid-feedback">Password is required.</div>
+					} @else if (loginForm.controls.password.touched && loginForm.controls.password.hasError('minlength')) {
+						<div class="invalid-feedback">Password must be at least 6 characters.</div>
 					}
 				</div>
 

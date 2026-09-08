@@ -66,7 +66,7 @@ const updateSection = async (req, res) => {
 
     const updatedSection = await Section.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { ...req.body, schedule: candidate.schedule },
       { new: true, runValidators: true }
     );
     if (!updatedSection) {

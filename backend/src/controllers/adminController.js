@@ -6,14 +6,58 @@ const Course = require("../models/Course");
 const Section = require("../models/Section");
 const Enrollment = require("../models/Enrollment");
 const CourseRequest = require("../models/CourseRequest");
+const updateStudent = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id).populate("userId");
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    const { name, studentNumber, departmentId, level, isActive } = req.body;
+    const updates = {};
+    if (name !== undefined) {
+      if (typeof name !== "string" || !name.trim()) return res.status(400).json({ message: "Name cannot be empty" });
+      updates.name = name.trim();
+    }
+    if (studentNumber !== undefined) {
+      const normalizedNumber = String(studentNumber).trim();
+      if (!normalizedNumber) return res.status(400).json({ message: "Student number cannot be empty" });
+      updates.studentNumber = normalizedNumber;
+    }
+    if (departmentId !== undefined) {
+      if (!await Department.exists({ _id: departmentId })) return res.status(400).json({ message: "Department not found" });
+      updates.departmentId = departmentId;
+    }
+    if (level !== undefined) updates.level = level;
+    if (isActive !== undefined) updates.isActive = isActive;
+
+    const updatedStudent = await Student.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).populate("userId departmentId");
+    if (updates.name !== undefined) await User.findByIdAndUpdate(student.userId._id, { name: updates.name }, { runValidators: true });
+    if (updates.studentNumber !== undefined) await User.findByIdAndUpdate(student.userId._id, { email: `${updates.studentNumber.toLowerCase()}@stud.nu.edu` }, { runValidators: true });
+    if (isActive !== undefined) await User.findByIdAndUpdate(student.userId._id, { isActive }, { runValidators: true });
+    res.status(200).json(await Student.findById(updatedStudent._id).populate("userId departmentId"));
+  } catch (error) {
+    res.status(error.code === 11000 ? 409 : 400).json({ message: error.code === 11000 ? "Student number already exists" : error.message });
+  }
+};
+
+const deleteStudent = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    await Student.findByIdAndUpdate(req.params.id, { isActive: false });
+    await User.findByIdAndUpdate(student.userId, { isActive: false });
+    res.status(200).json({ message: "Student deactivated successfully" });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
 const getOverview = async (req, res) => {
   try {
     const [departments, users, instructors, students, courses, sections, enrollments, courseRequests] = await Promise.all([
       Department.find().sort({ code: 1 }),
       User.find({ role: { $in: ["student", "instructor"] } }).select("-password").sort({ name: 1 }),
-      Instructor.find().populate("userId departmentId").sort({ employeeNumber: 1 }),
-      Student.find().populate("userId departmentId").sort({ studentNumber: 1 }),
+      Instructor.find({ isActive: { $ne: false } }).populate("userId departmentId").sort({ employeeNumber: 1 }),
+      Student.find({ isActive: { $ne: false } }).populate("userId departmentId").sort({ studentNumber: 1 }),
       Course.find().populate("departmentId", "name code").sort({ code: 1 }),
       Section.find().populate("courseId instructorId").sort({ semester: -1, sectionNumber: 1 }),
       Enrollment.find().populate("studentId sectionId"),
@@ -40,4 +84,4 @@ const reviewEnrollment = async (req, res) => {
   res.status(200).json(enrollment);
 };
 
-module.exports = { getOverview, reviewCourseRequest, reviewEnrollment };
+module.exports = { getOverview, reviewCourseRequest, reviewEnrollment, updateStudent, deleteStudent };

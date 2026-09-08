@@ -59,6 +59,12 @@ const updateInstructor = async (req, res) => {
       return res.status(404).json({ message: "Instructor not found" });
     }
     const updates = {};
+    if (req.body.name !== undefined) {
+      if (typeof req.body.name !== "string" || !req.body.name.trim()) {
+        return res.status(400).json({ message: "Name cannot be empty" });
+      }
+      await User.findByIdAndUpdate(instructor.userId._id, { name: req.body.name.trim() }, { runValidators: true });
+    }
     if (req.body.departmentId !== undefined) {
       if (!await Department.exists({ _id: req.body.departmentId })) {
         return res.status(400).json({ message: "Department not found" });
@@ -66,11 +72,20 @@ const updateInstructor = async (req, res) => {
       updates.departmentId = req.body.departmentId;
     }
     if (req.body.employeeNumber !== undefined) {
-      const employeeNumber = req.body.employeeNumber.trim();
-      if (instructor.userId.email !== `${employeeNumber.toLowerCase()}@gov.nu.edu`) {
-        return res.status(400).json({ message: "Instructor email must be employeeNumber@gov.nu.edu" });
+      const employeeNumber = req.body.employeeNumber.trim().toLowerCase().replace(/@gov\.nu\.edu$/, "");
+      if (!employeeNumber) {
+        return res.status(400).json({ message: "Employee number cannot be empty" });
+      }
+      if (!/^[a-z0-9-]{2,12}$/.test(employeeNumber)) {
+        return res.status(400).json({ message: "Employee number must be 2-12 letters, numbers, or hyphens" });
+      }
+      const email = `${employeeNumber.toLowerCase()}@gov.nu.edu`;
+      const existingUser = await User.findOne({ email, _id: { $ne: instructor.userId._id } });
+      if (existingUser) {
+        return res.status(409).json({ message: "An account with this employee number already exists" });
       }
       updates.employeeNumber = employeeNumber;
+      await User.findByIdAndUpdate(instructor.userId._id, { email }, { runValidators: true });
     }
     if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
     const updatedInstructor = await Instructor.findByIdAndUpdate(req.params.id, updates, {
@@ -153,7 +168,7 @@ const getMyDashboard = async (req, res) => {
     const sectionIds = sections.map((section) => section._id);
     const courseIds = [...new Set(sections.map((section) => String(section.courseId._id)))];
     const [enrollments, attendance, grades, assignments] = await Promise.all([
-      Enrollment.find({ sectionId: { $in: sectionIds }, status: "enrolled" }).populate({
+      Enrollment.find({ sectionId: { $in: sectionIds }, status: { $in: ["enrolled", "completed"] } }).populate({
         path: "studentId",
         populate: { path: "userId", select: "name email" }
       }),
@@ -210,7 +225,7 @@ const recordCourseworkGrade = async (req, res) => {
   try {
     const { instructor, section } = await getOwnedSection(req, req.params.sectionId);
     if (!section) return res.status(404).json({ message: "Assigned section not found" });
-    const enrollment = await Enrollment.findOne({ studentId: req.params.studentId, sectionId: section._id, status: "enrolled" });
+    const enrollment = await Enrollment.findOne({ studentId: req.params.studentId, sectionId: section._id, status: { $in: ["enrolled", "completed"] } });
     if (!enrollment) return res.status(400).json({ message: "Student is not enrolled in this section" });
     const courseworkMarks = Number(req.body.courseworkMarks);
     const finalExamMarks = Number(req.body.finalExamMarks);
@@ -219,11 +234,17 @@ const recordCourseworkGrade = async (req, res) => {
     }
     const totalMarks = courseworkMarks + finalExamMarks;
     const finalGrade = totalMarks >= 90 ? "A+" : totalMarks >= 85 ? "A" : totalMarks >= 80 ? "B+" : totalMarks >= 75 ? "B" : totalMarks >= 70 ? "C+" : totalMarks >= 60 ? "C" : totalMarks >= 50 ? "D" : "F";
+    const gradePoints = { "A+": 4, A: 4, "A-": 3.7, "B+": 3.3, B: 3, "B-": 2.7, "C+": 2.3, C: 2, D: 1, F: 0 }[finalGrade];
     const grade = await CourseworkGrade.findOneAndUpdate(
       { studentId: req.params.studentId, sectionId: section._id },
       { studentId: req.params.studentId, sectionId: section._id, courseworkMarks, finalExamMarks, totalMarks, finalGrade, recordedBy: instructor._id },
       { new: true, upsert: true, runValidators: true }
     );
+    await Enrollment.findByIdAndUpdate(enrollment._id, {
+      grade: finalGrade,
+      gradePoints,
+      status: "completed"
+    }, { new: true, runValidators: true });
     res.status(200).json(grade);
   } catch (error) {
     res.status(400).json({ message: error.message });
