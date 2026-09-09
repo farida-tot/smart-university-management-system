@@ -94,29 +94,6 @@ const reviewEnrollment = async (req, res) => {
     return res.status(200).json(enrollment);
   }
 
-  if (enrollment.requestType === "change") {
-    if (status === "approved") {
-      const previousEnrollment = await Enrollment.findOne({
-        studentId: enrollment.studentId,
-        sectionId: enrollment.previousSectionId,
-        status: { $in: ["enrolled", "completed"] }
-      });
-
-      if (previousEnrollment) {
-        previousEnrollment.status = "dropped";
-        await previousEnrollment.save();
-      }
-
-      enrollment.status = "enrolled";
-      await enrollment.save();
-      return res.status(200).json(enrollment);
-    }
-
-    enrollment.status = "rejected";
-    await enrollment.save();
-    return res.status(200).json(enrollment);
-  }
-
   enrollment.status = status === "approved" ? "enrolled" : "rejected";
   await enrollment.save();
   res.status(200).json(enrollment);

@@ -220,50 +220,11 @@ const requestCourse = async (req, res) => {
 const requestSection = async (req, res) => {
   const student = await Student.findOne({ userId: req.user.userId });
   const section = await Section.findById(req.params.sectionId).populate("courseId");
-  const requestType = req.body?.requestType === "change" ? "change" : "enrollment";
 
   if (!student || !section || String(section.courseId.departmentId) !== String(student.departmentId)) return res.status(404).json({ message: "Section not found" });
   if (!await CourseRequest.exists({ studentId: student._id, courseId: section.courseId._id, status: "approved" })) return res.status(403).json({ message: "The course must be approved before requesting a section" });
 
   try {
-    if (requestType === "change") {
-      const currentEnrollment = await Enrollment.findOne({
-        studentId: student._id,
-        status: { $in: ["enrolled", "completed"] },
-        requestType: { $ne: "drop" }
-      }).populate({ path: "sectionId", populate: { path: "courseId" } });
-
-      if (!currentEnrollment || !currentEnrollment.sectionId?.courseId) {
-        return res.status(400).json({ message: "You need an active section to request a change" });
-      }
-
-      if (String(currentEnrollment.sectionId.courseId._id) !== String(section.courseId._id)) {
-        return res.status(409).json({ message: "Section change requests must stay within the same course and department" });
-      }
-
-      const existingRequest = await Enrollment.findOne({
-        studentId: student._id,
-        sectionId: section._id,
-        requestType: "change",
-        status: "pending"
-      });
-
-      if (existingRequest) return res.status(409).json({ message: "A pending change request already exists for this section" });
-
-      const count = await Enrollment.countDocuments({ sectionId: section._id, status: { $in: ["pending", "enrolled"] } });
-      if (count >= section.capacity) return res.status(409).json({ message: "This section is full" });
-
-      const enrollment = await Enrollment.create({
-        studentId: student._id,
-        sectionId: section._id,
-        previousSectionId: currentEnrollment.sectionId._id,
-        requestType: "change",
-        status: "pending"
-      });
-
-      return res.status(201).json(enrollment);
-    }
-
     const sameCourse = await Enrollment.findOne({
       studentId: student._id,
       status: { $in: ["pending", "enrolled"] },
@@ -277,7 +238,7 @@ const requestSection = async (req, res) => {
     const count = await Enrollment.countDocuments({ sectionId: section._id, status: { $in: ["pending", "enrolled"] } });
     if (count >= section.capacity) return res.status(409).json({ message: "This section is full" });
 
-    const existingRequest = await Enrollment.findOne({ studentId: student._id, sectionId: section._id, requestType: { $in: ["enrollment", "change"] } });
+    const existingRequest = await Enrollment.findOne({ studentId: student._id, sectionId: section._id, requestType: "enrollment" });
     const enrollment = existingRequest
       ? await Enrollment.findByIdAndUpdate(existingRequest._id, { status: "pending", requestType: "enrollment", enrolledAt: new Date() }, { new: true, runValidators: true })
       : await Enrollment.create({ studentId: student._id, sectionId: section._id, status: "pending", requestType: "enrollment" });
@@ -303,7 +264,6 @@ const dropEnrollment = async (req, res) => {
 
     enrollment.status = "pending";
     enrollment.requestType = "drop";
-    enrollment.previousSectionId = enrollment.sectionId;
     await enrollment.save();
     res.status(200).json(enrollment);
   } catch (error) {

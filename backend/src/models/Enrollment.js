@@ -14,15 +14,9 @@ const enrollmentSchema = new mongoose.Schema(
       required: true
     },
 
-    previousSectionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Section",
-      default: null
-    },
-
     requestType: {
       type: String,
-      enum: ["enrollment", "change", "drop"],
+      enum: ["enrollment", "drop"],
       default: "enrollment"
     },
 
