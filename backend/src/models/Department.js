@@ -14,7 +14,8 @@ const departmentSchema = new mongoose.Schema(
       required: [true, "Department code is required"],
       unique: true,
       uppercase: true,
-      trim: true
+      trim: true,
+      match: [/^[A-Z]{2,8}$/, "Department code must contain 2-8 letters, such as CS"]
     },
 
     description: {

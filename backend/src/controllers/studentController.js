@@ -164,6 +164,7 @@ const getMyDashboard = async (req, res) => {
     const enrollmentData = enrollments.map((enrollment) => {
       const data = enrollment.toObject();
       const grade = courseworkGrades.find((item) => String(item.sectionId) === String(enrollment.sectionId?._id));
+      data.attendanceMarks = grade?.attendanceMarks ?? null;
       data.courseworkMarks = grade?.courseworkMarks ?? null;
       data.finalExamMarks = grade?.finalExamMarks ?? null;
       data.totalMarks = grade?.totalMarks ?? null;

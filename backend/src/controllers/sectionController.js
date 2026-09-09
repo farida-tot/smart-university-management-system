@@ -4,6 +4,7 @@ const { validateSection, getSlotTimes } = require("../utils/sectionValidation");
 
 const normalizeSchedule = (schedule) => schedule?.map((entry) => ({
   ...entry,
+  room: typeof entry.room === "string" ? entry.room.trim().replace(/\s+/g, " ") : entry.room,
   ...getSlotTimes(entry.slot)
 }));
 

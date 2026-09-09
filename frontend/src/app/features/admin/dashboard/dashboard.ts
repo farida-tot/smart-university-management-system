@@ -33,11 +33,11 @@ export class AdminDashboard implements OnInit {
   private statusTimer: any = null;
   editing: AdminEditState = { department: null, instructor: null, student: null, course: null, section: null };
 
-  departmentForm = this.formBuilder.nonNullable.group({ name: ['', Validators.required], code: ['', [Validators.required, Validators.pattern(/^[A-Za-z]{2,8}$/)]], description: [''] });
+  departmentForm = this.formBuilder.nonNullable.group({ name: ['', [Validators.required, Validators.minLength(2)]], code: ['', [Validators.required, Validators.pattern(/^[A-Za-z]{2,8}$/)]], description: ['', Validators.maxLength(500)] });
   instructorForm = this.formBuilder.nonNullable.group({ name: ['', Validators.required], employeeNumber: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]{2,12}(?:@gov\.nu\.edu)?$/i)]], password: ['', [Validators.required, Validators.minLength(6)]], departmentId: ['', Validators.required] });
   studentForm = this.formBuilder.nonNullable.group({ name: ['', Validators.required], studentNumber: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9-]{3,15}$/)]], password: ['', [Validators.required, Validators.minLength(6)]], departmentId: ['', Validators.required], level: [1, [Validators.required, Validators.min(1), Validators.max(4)]] });
-  courseForm = this.formBuilder.nonNullable.group({ code: ['', [Validators.required, Validators.pattern(/^[A-Za-z]{2,5}[0-9]{2,4}$/)]], name: ['', Validators.required], description: [''], creditHours: [3, [Validators.required, Validators.min(1)]], departmentId: ['', Validators.required] });
-  sectionForm = this.formBuilder.nonNullable.group({ courseId: ['', Validators.required], instructorId: ['', Validators.required], semester: ['Fall 2026', Validators.required], sectionNumber: ['S1', [Validators.required, Validators.pattern(/^S[0-9]{1,3}$/i)]], capacity: [30, [Validators.required, Validators.min(1), Validators.max(500)]], day: ['Sunday', Validators.required], slot: [1, [Validators.required, Validators.min(1), Validators.max(14)]], room: ['', Validators.required] });
+  courseForm = this.formBuilder.nonNullable.group({ code: ['', [Validators.required, Validators.pattern(/^[A-Za-z]{2,5}[0-9]{2,4}$/)]], name: ['', [Validators.required, Validators.minLength(2)]], description: ['', Validators.maxLength(500)], creditHours: [3, [Validators.required, Validators.min(1), Validators.max(6)]], departmentId: ['', Validators.required] });
+  sectionForm = this.formBuilder.nonNullable.group({ courseId: ['', Validators.required], instructorId: ['', Validators.required], semester: ['Fall 2026', [Validators.required, Validators.pattern(/^(Fall|Spring|Summer) 20[0-9]{2}$/)]], sectionNumber: ['S1', [Validators.required, Validators.pattern(/^S[0-9]{1,3}$/i)]], capacity: [30, [Validators.required, Validators.min(1), Validators.max(500)]], day: ['Sunday', Validators.required], slot: [1, [Validators.required, Validators.min(1), Validators.max(14)]], room: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9](?:[A-Za-z0-9 -]{0,18}[A-Za-z0-9])?$/)]] });
 
   ngOnInit() { this.loadData(); }
 
@@ -70,6 +70,7 @@ export class AdminDashboard implements OnInit {
     if (form.invalid) {
       form.markAllAsTouched();
       this.error = 'Complete all required fields with valid values before saving.';
+      this.scheduleStatusClear();
       this.changeDetector.markForCheck();
       return;
     }
@@ -96,6 +97,7 @@ export class AdminDashboard implements OnInit {
     this.studentForm.patchValue({ name: item.userId?.name ?? '', studentNumber: item.studentNumber, departmentId: item.departmentId?._id ?? item.departmentId, level: item.level, password: '' });
     this.message = 'Student loaded for editing. Update the form and click Save student.';
     this.error = '';
+    this.scheduleStatusClear();
     setTimeout(() => {
       const studentNumberInput = document.querySelector('input[formControlName="studentNumber"]');
       studentNumberInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -121,11 +123,11 @@ export class AdminDashboard implements OnInit {
       student: () => this.adminService.deleteStudent(id), course: () => this.adminService.deleteCourse(id), section: () => this.adminService.deleteSection(id)
     };
     this.busy = true;
-    requests[kind]().subscribe({ next: () => { this.message = 'Record removed successfully.'; this.busy = false; this.loadData(); }, error: (error: any) => { this.showError(error); this.busy = false; } });
+    requests[kind]().subscribe({ next: () => { this.message = 'Record removed successfully.'; this.busy = false; this.scheduleStatusClear(); this.loadData(); }, error: (error: any) => { this.showError(error); this.busy = false; } });
   }
 
-  reviewCourse(id: string, status: 'approved' | 'rejected') { this.adminService.reviewCourseRequest(id, status).subscribe({ next: () => { this.message = `Course request ${status}.`; this.error = ''; this.loadData(); }, error: error => this.showError(error) }); }
-  reviewSection(id: string, status: 'approved' | 'rejected') { this.adminService.reviewEnrollment(id, status).subscribe({ next: () => { this.message = `Enrollment request ${status}.`; this.error = ''; this.loadData(); }, error: error => this.showError(error) }); }
+  reviewCourse(id: string, status: 'approved' | 'rejected') { this.adminService.reviewCourseRequest(id, status).subscribe({ next: () => { this.message = `Course request ${status}.`; this.error = ''; this.scheduleStatusClear(); this.loadData(); }, error: error => this.showError(error) }); }
+  reviewSection(id: string, status: 'approved' | 'rejected') { this.adminService.reviewEnrollment(id, status).subscribe({ next: () => { this.message = `Enrollment request ${status}.`; this.error = ''; this.scheduleStatusClear(); this.loadData(); }, error: error => this.showError(error) }); }
 
   private showError(error: any) { this.error = error.error?.message ?? 'Unable to complete the request.'; this.scheduleStatusClear(); this.changeDetector.markForCheck(); }
 }

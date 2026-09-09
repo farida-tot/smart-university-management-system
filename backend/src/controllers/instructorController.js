@@ -7,6 +7,14 @@ const CourseworkGrade = require("../models/CourseworkGrade");
 const Assignment = require("../models/Assignment");
 const Department = require("../models/Department");
 
+const gradePointValues = { "A+": 4, A: 4, "B+": 3.3, B: 3, "C+": 2.3, C: 2, D: 1, F: 0 };
+
+const calculateGrade = (attendanceMarks, courseworkMarks, finalExamMarks) => {
+  const totalMarks = attendanceMarks + courseworkMarks + finalExamMarks;
+  const finalGrade = totalMarks >= 90 ? "A+" : totalMarks >= 85 ? "A" : totalMarks >= 80 ? "B+" : totalMarks >= 75 ? "B" : totalMarks >= 70 ? "C+" : totalMarks >= 60 ? "C" : totalMarks >= 50 ? "D" : "F";
+  return { totalMarks, finalGrade, gradePoints: gradePointValues[finalGrade] };
+};
+
 const getAllInstructors = async (req, res) => {
   try {
     const instructors = await Instructor.find().populate("userId departmentId");
@@ -227,23 +235,34 @@ const recordCourseworkGrade = async (req, res) => {
     if (!section) return res.status(404).json({ message: "Assigned section not found" });
     const enrollment = await Enrollment.findOne({ studentId: req.params.studentId, sectionId: section._id, status: { $in: ["enrolled", "completed"] } });
     if (!enrollment) return res.status(400).json({ message: "Student is not enrolled in this section" });
-    const courseworkMarks = Number(req.body.courseworkMarks);
-    const finalExamMarks = Number(req.body.finalExamMarks);
-    if (!Number.isInteger(courseworkMarks) || courseworkMarks < 1 || courseworkMarks > 40 || !Number.isInteger(finalExamMarks) || finalExamMarks < 1 || finalExamMarks > 60) {
-      return res.status(400).json({ message: "Coursework must be 1-40 and final exam must be 1-60" });
+    const currentGrade = await CourseworkGrade.findOne({ studentId: req.params.studentId, sectionId: section._id });
+    const parseMark = (field) => {
+      if (req.body[field] === undefined) return currentGrade?.[field];
+      if (req.body[field] === "") return null;
+      return Number(req.body[field]);
+    };
+    const marks = {
+      attendanceMarks: parseMark("attendanceMarks"),
+      courseworkMarks: parseMark("courseworkMarks"),
+      finalExamMarks: parseMark("finalExamMarks")
+    };
+    const ranges = [["attendanceMarks", 0, 10], ["courseworkMarks", 0, 30], ["finalExamMarks", 0, 60]];
+    for (const [field, minimum, maximum] of ranges) {
+      if (marks[field] === null || marks[field] !== undefined && (!Number.isInteger(marks[field]) || marks[field] < minimum || marks[field] > maximum)) {
+        return res.status(400).json({ message: `Attendance must be 0-10, coursework must be 0-30, and final exam must be 0-60.` });
+      }
     }
-    const totalMarks = courseworkMarks + finalExamMarks;
-    const finalGrade = totalMarks >= 90 ? "A+" : totalMarks >= 85 ? "A" : totalMarks >= 80 ? "B+" : totalMarks >= 75 ? "B" : totalMarks >= 70 ? "C+" : totalMarks >= 60 ? "C" : totalMarks >= 50 ? "D" : "F";
-    const gradePoints = { "A+": 4, A: 4, "A-": 3.7, "B+": 3.3, B: 3, "B-": 2.7, "C+": 2.3, C: 2, D: 1, F: 0 }[finalGrade];
+    const complete = ranges.every(([field]) => Number.isInteger(marks[field]));
+    const calculated = complete ? calculateGrade(marks.attendanceMarks, marks.courseworkMarks, marks.finalExamMarks) : { totalMarks: null, finalGrade: null, gradePoints: null };
     const grade = await CourseworkGrade.findOneAndUpdate(
       { studentId: req.params.studentId, sectionId: section._id },
-      { studentId: req.params.studentId, sectionId: section._id, courseworkMarks, finalExamMarks, totalMarks, finalGrade, recordedBy: instructor._id },
+      { studentId: req.params.studentId, sectionId: section._id, ...marks, ...calculated, recordedBy: instructor._id },
       { new: true, upsert: true, runValidators: true }
     );
     await Enrollment.findByIdAndUpdate(enrollment._id, {
-      grade: finalGrade,
-      gradePoints,
-      status: "completed"
+      grade: calculated.finalGrade,
+      gradePoints: calculated.gradePoints,
+      status: complete ? "completed" : "enrolled"
     }, { new: true, runValidators: true });
     res.status(200).json(grade);
   } catch (error) {
@@ -263,3 +282,5 @@ module.exports = {
   recordAttendance,
   recordCourseworkGrade
 };
+
+module.exports.calculateGrade = calculateGrade;
