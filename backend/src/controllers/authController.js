@@ -247,9 +247,17 @@ const login = async (req, res) => {
     // 3. Find user
     // password is select:false in User schema,
     // so explicitly select it here
-    const user = await User.findOne({
+    let user = await User.findOne({
       email: normalizedEmail
     }).select("+password");
+
+    if (!user) {
+      const instructorEmail = normalizedEmail.match(/^([a-z0-9-]{2,12})@gov\.nu\.edu$/);
+      if (instructorEmail) {
+        const instructor = await Instructor.findOne({ employeeNumber: instructorEmail[1] }).select("userId");
+        user = instructor && await User.findById(instructor.userId).select("+password");
+      }
+    }
 
     if (!user) {
       return res.status(401).json({

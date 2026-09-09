@@ -2,7 +2,7 @@
   <header class="dashboard-header">
     <div>
       <p class="kicker">FCAI-NC / FACULTY WORKSPACE</p>
-      <h1>Good morning, {{ dashboard?.instructor?.userId?.name?.split(' ')?.[1] ?? 'Instructor' }}.</h1>
+      <h1>Welcome, {{ dashboard?.instructor?.userId?.name ?? 'there' }}.</h1>
       <p class="subhead">Your teaching load, student progress, and classroom rhythm in one place.</p>
     </div>
     @if (dashboard?.instructor; as instructor) {

@@ -6,6 +6,7 @@ const Course = require("../models/Course");
 const Section = require("../models/Section");
 const Enrollment = require("../models/Enrollment");
 const CourseRequest = require("../models/CourseRequest");
+
 const updateStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id).populate("userId");
@@ -32,6 +33,7 @@ const updateStudent = async (req, res) => {
     if (isActive !== undefined) updates.isActive = isActive;
 
     const updatedStudent = await Student.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true }).populate("userId departmentId");
+
     if (updates.name !== undefined) await User.findByIdAndUpdate(student.userId._id, { name: updates.name }, { runValidators: true });
     if (updates.studentNumber !== undefined) await User.findByIdAndUpdate(student.userId._id, { email: `${updates.studentNumber.toLowerCase()}@stud.nu.edu` }, { runValidators: true });
     if (isActive !== undefined) await User.findByIdAndUpdate(student.userId._id, { isActive }, { runValidators: true });
