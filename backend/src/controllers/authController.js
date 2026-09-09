@@ -257,10 +257,13 @@ const login = async (req, res) => {
       });
     }
 
-    const validEmailDomain = user.role === "student"
-      ? /^[0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
-      : user.role === "instructor" || user.role === "admin"
-        ? /^[0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
+const validEmailDomain =
+  user.role === "student"
+    ? /^[0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
+    : user.role === "instructor"
+      ? /^[0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
+      : user.role === "admin"
+        ? /^[a-z0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
         : false;
 
     if (!validEmailDomain) {
