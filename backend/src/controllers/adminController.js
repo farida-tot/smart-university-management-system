@@ -59,7 +59,10 @@ const getOverview = async (req, res) => {
       Instructor.find({ isActive: { $ne: false } }).populate("userId departmentId").sort({ employeeNumber: 1 }),
       Student.find({ isActive: { $ne: false } }).populate("userId departmentId").sort({ studentNumber: 1 }),
       Course.find().populate("departmentId", "name code").sort({ code: 1 }),
-      Section.find().populate("courseId instructorId").sort({ semester: -1, sectionNumber: 1 }),
+      Section.find()
+        .populate({ path: "courseId", populate: { path: "departmentId" } })
+        .populate({ path: "instructorId", populate: { path: "userId departmentId" } })
+        .sort({ semester: -1, sectionNumber: 1 }),
       Enrollment.find().populate("studentId sectionId"),
       CourseRequest.find({ status: "pending" }).populate("studentId courseId")
     ]);
@@ -77,10 +80,43 @@ const reviewCourseRequest = async (req, res) => {
 };
 
 const reviewEnrollment = async (req, res) => {
-  const status = req.body.status === "approved" ? "enrolled" : req.body.status === "rejected" ? "rejected" : null;
+  const status = req.body.status === "approved" ? "approved" : req.body.status === "rejected" ? "rejected" : null;
   if (!status) return res.status(400).json({ message: "Status must be approved or rejected" });
-  const enrollment = await Enrollment.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
+
+  const enrollment = await Enrollment.findById(req.params.id).populate({ path: "sectionId", populate: { path: "courseId" } });
   if (!enrollment) return res.status(404).json({ message: "Enrollment request not found" });
+
+  if (enrollment.requestType === "drop") {
+    enrollment.status = status === "approved" ? "dropped" : "enrolled";
+    await enrollment.save();
+    return res.status(200).json(enrollment);
+  }
+
+  if (enrollment.requestType === "change") {
+    if (status === "approved") {
+      const previousEnrollment = await Enrollment.findOne({
+        studentId: enrollment.studentId,
+        sectionId: enrollment.previousSectionId,
+        status: { $in: ["enrolled", "completed"] }
+      });
+
+      if (previousEnrollment) {
+        previousEnrollment.status = "dropped";
+        await previousEnrollment.save();
+      }
+
+      enrollment.status = "enrolled";
+      await enrollment.save();
+      return res.status(200).json(enrollment);
+    }
+
+    enrollment.status = "rejected";
+    await enrollment.save();
+    return res.status(200).json(enrollment);
+  }
+
+  enrollment.status = status === "approved" ? "enrolled" : "rejected";
+  await enrollment.save();
   res.status(200).json(enrollment);
 };
 

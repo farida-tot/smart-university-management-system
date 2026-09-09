@@ -30,6 +30,7 @@ export class AdminDashboard implements OnInit {
   message = '';
   error = '';
   busy = false;
+  private statusTimer: any = null;
   editing: AdminEditState = { department: null, instructor: null, student: null, course: null, section: null };
 
   departmentForm = this.formBuilder.nonNullable.group({ name: ['', Validators.required], code: ['', [Validators.required, Validators.pattern(/^[A-Za-z]{2,8}$/)]], description: [''] });
@@ -47,7 +48,21 @@ export class AdminDashboard implements OnInit {
   private beginEdit(kind: keyof AdminEditState, label: string) {
     this.message = `Editing ${label}. Update the form above and save.`;
     this.error = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    this.scheduleStatusClear();
+    const formId = `${kind}-form`;
+    const formElement = document.getElementById(formId);
+    formElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  private scheduleStatusClear() {
+    if (this.statusTimer) {
+      clearTimeout(this.statusTimer);
+    }
+    this.statusTimer = setTimeout(() => {
+      this.message = '';
+      this.error = '';
+      this.changeDetector.markForCheck();
+    }, 1700);
   }
 
   submit(form: any, request: () => any, kind: keyof AdminEditState) {
@@ -59,7 +74,7 @@ export class AdminDashboard implements OnInit {
       return;
     }
     this.busy = true;
-    request().subscribe({ next: () => { this.message = 'Saved successfully.'; this.busy = false; form.reset(); this.editing[kind] = null; this.restorePasswordValidation(kind); this.loadData(); }, error: (error: any) => { this.showError(error); this.busy = false; } });
+    request().subscribe({ next: () => { this.message = 'Saved successfully.'; this.busy = false; this.scheduleStatusClear(); form.reset(); this.editing[kind] = null; this.restorePasswordValidation(kind); this.loadData(); }, error: (error: any) => { this.showError(error); this.busy = false; } });
   }
 
   createDepartment() { const id = this.editing.department; this.submit(this.departmentForm, () => id ? this.adminService.updateDepartment(id, this.departmentForm.getRawValue()) : this.adminService.createDepartment(this.departmentForm.getRawValue()), 'department'); }
@@ -112,5 +127,5 @@ export class AdminDashboard implements OnInit {
   reviewCourse(id: string, status: 'approved' | 'rejected') { this.adminService.reviewCourseRequest(id, status).subscribe({ next: () => { this.message = `Course request ${status}.`; this.error = ''; this.loadData(); }, error: error => this.showError(error) }); }
   reviewSection(id: string, status: 'approved' | 'rejected') { this.adminService.reviewEnrollment(id, status).subscribe({ next: () => { this.message = `Enrollment request ${status}.`; this.error = ''; this.loadData(); }, error: error => this.showError(error) }); }
 
-  private showError(error: any) { this.error = error.error?.message ?? 'Unable to complete the request.'; this.changeDetector.markForCheck(); }
+  private showError(error: any) { this.error = error.error?.message ?? 'Unable to complete the request.'; this.scheduleStatusClear(); this.changeDetector.markForCheck(); }
 }

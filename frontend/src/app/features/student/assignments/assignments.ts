@@ -9,5 +9,24 @@ export class StudentAssignments implements OnInit {
   assignments: any[] = [];
   error = '';
   ngOnInit() { this.service.getAssignments().subscribe({ next: data => { this.assignments = data; this.changeDetector.markForCheck(); }, error: error => { this.error = error.error?.message ?? 'Unable to load assignments.'; this.changeDetector.markForCheck(); } }); }
-  download(id: string, name: string) { this.service.downloadAssignment(id).subscribe(file => { const url = URL.createObjectURL(file); const link = document.createElement('a'); link.href = url; link.download = name; link.click(); URL.revokeObjectURL(url); }); }
+  download(id: string, name: string) {
+    this.error = '';
+    this.service.downloadAssignment(id).subscribe({
+      next: (file) => {
+        const blob = file instanceof Blob ? file : new Blob([file], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = name || 'assignment.pdf';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      },
+      error: (error) => {
+        this.error = error.error?.message ?? 'Unable to download assignment.';
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
 }

@@ -78,23 +78,33 @@ const listCourseAssignments = async (req, res) => {
 };
 
 const downloadAssignment = async (req, res) => {
-  const assignment = await Assignment.findById(req.params.id);
-  if (!assignment) return res.status(404).json({ message: "Assignment not found" });
+  try {
+    const assignment = await Assignment.findById(req.params.id);
+    if (!assignment) return res.status(404).json({ message: "Assignment not found" });
 
-  let allowed = false;
-  if (req.user.role === "instructor") {
-    allowed = Boolean((await instructorTeachesCourse(req.user.userId, assignment.courseId)).section);
-  } else if (req.user.role === "student") {
-    const student = await Student.findOne({ userId: req.user.userId });
-    const sections = await Section.find({ courseId: assignment.courseId }, "_id");
-    allowed = Boolean(student && await Enrollment.exists({
-      studentId: student._id,
-      sectionId: { $in: sections.map((section) => section._id) },
-      status: "enrolled"
-    }));
+    let allowed = false;
+    if (req.user.role === "instructor") {
+      allowed = Boolean((await instructorTeachesCourse(req.user.userId, assignment.courseId)).section);
+    } else if (req.user.role === "student") {
+      const student = await Student.findOne({ userId: req.user.userId });
+      const sections = await Section.find({ courseId: assignment.courseId }, "_id");
+      allowed = Boolean(student && await Enrollment.exists({
+        studentId: student._id,
+        sectionId: { $in: sections.map((section) => section._id) },
+        status: "enrolled"
+      }));
+    }
+
+    if (!allowed) return res.status(403).json({ message: "You are not registered for this course" });
+
+    const fileBuffer = await fs.readFile(assignment.filePath);
+    res.status(200);
+    res.setHeader("Content-Type", assignment.mimeType || "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${assignment.originalName}"`);
+    return res.send(fileBuffer);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
-
-  if (!allowed) return res.status(403).json({ message: "You are not registered for this course" });
 };
 
 module.exports = { uploadAssignment, listCourseAssignments, listMyAssignments, downloadAssignment };

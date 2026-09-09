@@ -138,7 +138,25 @@ const getMyDashboard = async (req, res) => {
     const student = await Student.findOne({ userId: req.user.userId }).populate("userId departmentId");
     if (!student) return res.status(404).json({ message: "Student profile not found" });
     const [enrollments, courseRequests, courses, courseworkGrades] = await Promise.all([
-      Enrollment.find({ studentId: student._id }).populate({ path: "sectionId", populate: { path: "courseId" } }),
+      Enrollment.find({ studentId: student._id }).populate({
+        path: "sectionId",
+        populate: [
+          {
+            path: "courseId",
+            populate: {
+              path: "departmentId",
+              select: "name code"
+            }
+          },
+          {
+            path: "instructorId",
+            populate: {
+              path: "userId",
+              select: "name email"
+            }
+          }
+        ]
+      }),
       CourseRequest.find({ studentId: student._id }).populate("courseId"),
       Course.find({ departmentId: student.departmentId._id }).populate("departmentId", "name code"),
       CourseworkGrade.find({ studentId: student._id })
@@ -159,7 +177,22 @@ const getMyDashboard = async (req, res) => {
     const creditHours = active.reduce((total, item) => total + (item.sectionId?.courseId?.creditHours || 0), 0);
     const gradedCreditHours = graded.reduce((total, item) => total + (item.sectionId?.courseId?.creditHours || 0), 0);
     const gpa = gradedCreditHours ? graded.reduce((total, item) => total + item.gradePoints * (item.sectionId?.courseId?.creditHours || 0), 0) / gradedCreditHours : 0;
-    const sections = await Section.find({ courseId: { $in: courses.map((course) => course._id) }, isActive: true }).populate("courseId instructorId");
+    const sections = await Section.find({ courseId: { $in: courses.map((course) => course._id) }, isActive: true }).populate([
+      {
+        path: "courseId",
+        populate: {
+          path: "departmentId",
+          select: "name code"
+        }
+      },
+      {
+        path: "instructorId",
+        populate: {
+          path: "userId",
+          select: "name email"
+        }
+      }
+    ]);
     const myCourses = courseRequests.filter((request) => request.status === "approved").map((request) => ({
       ...request.courseId.toObject(),
       requestId: request._id,
@@ -186,17 +219,68 @@ const requestCourse = async (req, res) => {
 const requestSection = async (req, res) => {
   const student = await Student.findOne({ userId: req.user.userId });
   const section = await Section.findById(req.params.sectionId).populate("courseId");
+  const requestType = req.body?.requestType === "change" ? "change" : "enrollment";
+
   if (!student || !section || String(section.courseId.departmentId) !== String(student.departmentId)) return res.status(404).json({ message: "Section not found" });
   if (!await CourseRequest.exists({ studentId: student._id, courseId: section.courseId._id, status: "approved" })) return res.status(403).json({ message: "The course must be approved before requesting a section" });
-  const sameCourse = await Enrollment.findOne({ studentId: student._id, status: { $in: ["pending", "enrolled"] } }).populate({ path: "sectionId", populate: { path: "courseId" } });
-  if (sameCourse?.sectionId?.courseId?._id && String(sameCourse.sectionId.courseId._id) === String(section.courseId._id)) return res.status(409).json({ message: "You may enroll in only one section of this course" });
-  const count = await Enrollment.countDocuments({ sectionId: section._id, status: { $in: ["pending", "enrolled"] } });
-  if (count >= section.capacity) return res.status(409).json({ message: "This section is full" });
+
   try {
-    const existingRequest = await Enrollment.findOne({ studentId: student._id, sectionId: section._id });
+    if (requestType === "change") {
+      const currentEnrollment = await Enrollment.findOne({
+        studentId: student._id,
+        status: { $in: ["enrolled", "completed"] },
+        requestType: { $ne: "drop" }
+      }).populate({ path: "sectionId", populate: { path: "courseId" } });
+
+      if (!currentEnrollment || !currentEnrollment.sectionId?.courseId) {
+        return res.status(400).json({ message: "You need an active section to request a change" });
+      }
+
+      if (String(currentEnrollment.sectionId.courseId._id) !== String(section.courseId._id)) {
+        return res.status(409).json({ message: "Section change requests must stay within the same course and department" });
+      }
+
+      const existingRequest = await Enrollment.findOne({
+        studentId: student._id,
+        sectionId: section._id,
+        requestType: "change",
+        status: "pending"
+      });
+
+      if (existingRequest) return res.status(409).json({ message: "A pending change request already exists for this section" });
+
+      const count = await Enrollment.countDocuments({ sectionId: section._id, status: { $in: ["pending", "enrolled"] } });
+      if (count >= section.capacity) return res.status(409).json({ message: "This section is full" });
+
+      const enrollment = await Enrollment.create({
+        studentId: student._id,
+        sectionId: section._id,
+        previousSectionId: currentEnrollment.sectionId._id,
+        requestType: "change",
+        status: "pending"
+      });
+
+      return res.status(201).json(enrollment);
+    }
+
+    const sameCourse = await Enrollment.findOne({
+      studentId: student._id,
+      status: { $in: ["pending", "enrolled"] },
+      requestType: { $ne: "drop" }
+    }).populate({ path: "sectionId", populate: { path: "courseId" } });
+
+    if (sameCourse?.sectionId?.courseId?._id && String(sameCourse.sectionId.courseId._id) === String(section.courseId._id)) {
+      return res.status(409).json({ message: "You may enroll in only one section of this course" });
+    }
+
+    const count = await Enrollment.countDocuments({ sectionId: section._id, status: { $in: ["pending", "enrolled"] } });
+    if (count >= section.capacity) return res.status(409).json({ message: "This section is full" });
+
+    const existingRequest = await Enrollment.findOne({ studentId: student._id, sectionId: section._id, requestType: { $in: ["enrollment", "change"] } });
     const enrollment = existingRequest
-      ? await Enrollment.findByIdAndUpdate(existingRequest._id, { status: "pending", enrolledAt: new Date() }, { new: true, runValidators: true })
-      : await Enrollment.create({ studentId: student._id, sectionId: section._id, status: "pending" });
+      ? await Enrollment.findByIdAndUpdate(existingRequest._id, { status: "pending", requestType: "enrollment", enrolledAt: new Date() }, { new: true, runValidators: true })
+      : await Enrollment.create({ studentId: student._id, sectionId: section._id, status: "pending", requestType: "enrollment" });
+
     res.status(201).json(enrollment);
   } catch (error) {
     res.status(error.code === 11000 ? 409 : 400).json({ message: error.code === 11000 ? "Section request already exists" : error.message });
@@ -206,12 +290,19 @@ const requestSection = async (req, res) => {
 const dropEnrollment = async (req, res) => {
   try {
     const student = await Student.findOne({ userId: req.user.userId });
-    const enrollment = student && await Enrollment.findOne({ studentId: student._id, _id: req.params.id });
+    const enrollment = student && await Enrollment.findById(req.params.id);
     if (!enrollment) return res.status(404).json({ message: "Enrollment not found" });
-    if (!["pending", "enrolled"].includes(enrollment.status)) {
+    if (String(enrollment.studentId) !== String(student._id)) return res.status(403).json({ message: "You can only request to drop your own enrollment" });
+    if (!["pending", "enrolled", "completed"].includes(enrollment.status) || enrollment.requestType === "drop") {
       return res.status(400).json({ message: "This enrollment cannot be dropped" });
     }
-    enrollment.status = "dropped";
+
+    const pendingDrop = await Enrollment.findOne({ studentId: student._id, sectionId: enrollment.sectionId, requestType: "drop", status: "pending" });
+    if (pendingDrop) return res.status(409).json({ message: "A drop request for this section is already pending approval" });
+
+    enrollment.status = "pending";
+    enrollment.requestType = "drop";
+    enrollment.previousSectionId = enrollment.sectionId;
     await enrollment.save();
     res.status(200).json(enrollment);
   } catch (error) {
