@@ -20,6 +20,9 @@ export class AdminService {
   createStudent(data: { name: string; password: string; studentNumber: string; departmentId: string; level: number }) {
     return this.http.post(`${this.api}/auth/students`, data);
   }
+  deleteStudent(id: string) {
+  return this.http.delete(`${this.api}/admin/students/${id}`);
+  }
   createCourse(data: { code: string; name: string; description: string; creditHours: number; departmentId: string }) {
     return this.http.post(`${this.api}/courses`, { ...data, prerequisites: [] });
   }

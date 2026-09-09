@@ -6,6 +6,8 @@ const Course = require("../models/Course");
 const Section = require("../models/Section");
 const Enrollment = require("../models/Enrollment");
 const CourseRequest = require("../models/CourseRequest");
+const Attendance = require("../models/Attendance");
+const CourseworkGrade = require("../models/CourseworkGrade");
 
 const getOverview = async (req, res) => {
   try {
@@ -40,4 +42,55 @@ const reviewEnrollment = async (req, res) => {
   res.status(200).json(enrollment);
 };
 
-module.exports = { getOverview, reviewCourseRequest, reviewEnrollment };
+const deleteStudent = async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+
+    if (!student) {
+      return res.status(404).json({
+        message: "Student not found"
+      });
+    }
+
+    // Delete all data related to the student
+    await Enrollment.deleteMany({
+      studentId: student._id
+    });
+
+    await CourseRequest.deleteMany({
+      studentId: student._id
+    });
+
+    await CourseworkGrade.deleteMany({
+      studentId: student._id
+    });
+
+    await Attendance.deleteMany({
+      studentId: student._id
+    });
+
+    // Delete student profile
+    await Student.findByIdAndDelete(student._id);
+
+    // Delete user account
+    await User.findByIdAndDelete(student.userId);
+
+    res.status(200).json({
+      message: "Student and all related data deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete student error:", error);
+
+    res.status(500).json({
+      message: "Server error while deleting student"
+    });
+  }
+};
+
+module.exports = {
+  getOverview,
+  reviewCourseRequest,
+  reviewEnrollment,
+  deleteStudent
+};
