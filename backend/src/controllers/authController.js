@@ -49,6 +49,11 @@ const createStudent = async (req, res) => {
     }
 
     const normalizedStudentNumber = studentNumber.trim();
+    if (!/^\d{8}$/.test(normalizedStudentNumber)) {
+      return res.status(400).json({
+        message: "Student number must be exactly 8 digits. Email format: 8-digit ID + @stud.nu.edu"
+      });
+    }
     const normalizedEmail = `${normalizedStudentNumber.toLowerCase()}@stud.nu.edu`;
 
     const [existingUser, existingStudent] = await Promise.all([
@@ -164,8 +169,10 @@ const createInstructor = async (req, res) => {
     }
 
     const normalizedEmployeeNumber = employeeNumber.trim().toLowerCase().replace(/@gov\.nu\.edu$/, "");
-    if (!/^[a-z0-9-]{2,12}$/.test(normalizedEmployeeNumber)) {
-      return res.status(400).json({ message: "Employee number must be 2-12 letters, numbers, or hyphens" });
+      if (!/^\d{8}$/.test(normalizedEmployeeNumber)) {
+      return res.status(400).json({
+        message: "Employee number must be exactly 8 digits. Email format: 8-digit ID + @gov.nu.edu"
+      });
     }
     const email = `${normalizedEmployeeNumber}@gov.nu.edu`;
     if (await User.exists({ email })) {
@@ -227,14 +234,14 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Validate input
+    //Validate input
     if (!email || !password || typeof password !== "string" || password.length < 6) {
       return res.status(400).json({
         message: "Email and password are required"
       });
     }
 
-    // 2. Normalize email
+    //Normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
     // 3. Find user
@@ -251,9 +258,9 @@ const login = async (req, res) => {
     }
 
     const validEmailDomain = user.role === "student"
-      ? /^[a-z0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
+      ? /^[0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
       : user.role === "instructor" || user.role === "admin"
-        ? /^[a-z0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
+        ? /^[0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
         : false;
 
     if (!validEmailDomain) {

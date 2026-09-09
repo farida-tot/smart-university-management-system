@@ -41,18 +41,18 @@ test('admin student creation rejects a student when the department does not exis
     Department.findById = async () => null;
     User.create = async (...args) => {
       userCreateCalled = true;
-      return { _id: 'user-id', name: 'Ali', email: '2024001@nu.edu', role: 'student', ...args[0] };
+      return { _id: 'user-id', name: 'Ali', email: '20240011@stud.nu.edu', role: 'student', ...args[0] };
     };
     Student.create = async (...args) => {
       studentCreateCalled = true;
-      return { _id: 'student-id', studentNumber: '2024001', departmentId: validDepartmentId, level: 1, ...args[0] };
+      return { _id: 'student-id', studentNumber: '20240011', departmentId: validDepartmentId, level: 1, ...args[0] };
     };
 
     const req = {
       body: {
         name: 'Ali',
         password: 'secret123',
-        studentNumber: '2024001',
+        studentNumber: '20240011',
         departmentId: validDepartmentId,
         level: 1
       }
@@ -72,5 +72,38 @@ test('admin student creation rejects a student when the department does not exis
     Department.findById = originalDepartmentFindById;
     User.create = originalUserCreate;
     Student.create = originalStudentCreate;
+  }
+});
+
+test('student creation rejects non-8-digit student numbers', async () => {
+  const originalUserFindOne = User.findOne;
+  const originalStudentFindOne = Student.findOne;
+  const originalDepartmentFindById = Department.findById;
+
+  try {
+    User.findOne = async () => null;
+    Student.findOne = async () => null;
+    Department.findById = async () => ({ _id: validDepartmentId, name: 'Computer Science' });
+
+    const req = {
+      body: {
+        name: 'Ali',
+        password: 'secret123',
+        studentNumber: '2024001',
+        departmentId: validDepartmentId,
+        level: 1
+      }
+    };
+
+    const res = buildResponse();
+
+    await createStudent(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.match(res.payload.message, /8 digits/i);
+  } finally {
+    User.findOne = originalUserFindOne;
+    Student.findOne = originalStudentFindOne;
+    Department.findById = originalDepartmentFindById;
   }
 });

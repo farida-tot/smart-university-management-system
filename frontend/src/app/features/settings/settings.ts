@@ -31,7 +31,15 @@ export class Settings implements OnInit {
   changePassword() {
     this.clearFeedback();
     if (this.newPassword.length < 6) { this.error = 'New password must be at least 6 characters.'; return; }
-    this.auth.changePassword(this.currentPassword, this.newPassword).subscribe({ next: () => { this.message = 'Password changed successfully.'; this.currentPassword = ''; this.newPassword = ''; }, error: error => this.showError(error) });
+    this.auth.changePassword(this.currentPassword, this.newPassword).subscribe({
+      next: () => {
+        this.message = 'Password changed successfully.';
+        this.currentPassword = '';
+        this.newPassword = '';
+        this.changeDetector.markForCheck();
+      },
+      error: error => this.showError(error)
+    });
   }
 
   saveInstructorProfile() {

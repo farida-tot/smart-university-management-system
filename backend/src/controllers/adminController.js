@@ -19,7 +19,9 @@ const updateStudent = async (req, res) => {
     }
     if (studentNumber !== undefined) {
       const normalizedNumber = String(studentNumber).trim();
-      if (!normalizedNumber) return res.status(400).json({ message: "Student number cannot be empty" });
+      if (!/^\d{8}$/.test(normalizedNumber)) {
+        return res.status(400).json({ message: "Student number must be exactly 8 digits. Email format: 8-digit ID + @stud.nu.edu" });
+      }
       updates.studentNumber = normalizedNumber;
     }
     if (departmentId !== undefined) {

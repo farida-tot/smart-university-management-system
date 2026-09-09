@@ -84,8 +84,8 @@ const updateInstructor = async (req, res) => {
       if (!employeeNumber) {
         return res.status(400).json({ message: "Employee number cannot be empty" });
       }
-      if (!/^[a-z0-9-]{2,12}$/.test(employeeNumber)) {
-        return res.status(400).json({ message: "Employee number must be 2-12 letters, numbers, or hyphens" });
+      if (!/^\d{8}$/.test(employeeNumber)) {
+        return res.status(400).json({ message: "Employee number must be exactly 8 digits. Email format: 8-digit ID + @gov.nu.edu" });
       }
       const email = `${employeeNumber.toLowerCase()}@gov.nu.edu`;
       const existingUser = await User.findOne({ email, _id: { $ne: instructor.userId._id } });
