@@ -30,7 +30,7 @@ const createStudent = async (req, res) => {
       });
     }
 
-    if (typeof password !== "string" || password.length < 6) {
+    if (typeof password !== "string" || password.trim() !== password || password.length < 6) {
       return res.status(400).json({
         message: "Password must be at least 6 characters"
       });
@@ -49,6 +49,11 @@ const createStudent = async (req, res) => {
     }
 
     const normalizedStudentNumber = studentNumber.trim();
+    if (!/^\d{8}$/.test(normalizedStudentNumber)) {
+      return res.status(400).json({
+        message: "Student number must be exactly 8 digits. Email format: 8-digit ID + @stud.nu.edu"
+      });
+    }
     const normalizedEmail = `${normalizedStudentNumber.toLowerCase()}@stud.nu.edu`;
 
     const [existingUser, existingStudent] = await Promise.all([
@@ -156,14 +161,19 @@ const createInstructor = async (req, res) => {
     if (!name || !employeeNumber || !password || !departmentId) {
       return res.status(400).json({ message: "Name, employee number, password, and department ID are required" });
     }
-    if (typeof password !== "string" || password.length < 6) {
+    if (typeof password !== "string" || password.trim() !== password || password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
     if (!await Department.exists({ _id: departmentId })) {
       return res.status(400).json({ message: "Department not found" });
     }
 
-    const normalizedEmployeeNumber = employeeNumber.trim().toLowerCase();
+    const normalizedEmployeeNumber = employeeNumber.trim().toLowerCase().replace(/@gov\.nu\.edu$/, "");
+      if (!/^\d{8}$/.test(normalizedEmployeeNumber)) {
+      return res.status(400).json({
+        message: "Employee number must be exactly 8 digits. Email format: 8-digit ID + @gov.nu.edu"
+      });
+    }
     const email = `${normalizedEmployeeNumber}@gov.nu.edu`;
     if (await User.exists({ email })) {
       return res.status(409).json({ message: "An account with this employee number already exists" });
@@ -179,7 +189,7 @@ const createInstructor = async (req, res) => {
     try {
       const instructor = await Instructor.create({
         userId: user._id,
-        employeeNumber: employeeNumber.trim(),
+        employeeNumber: normalizedEmployeeNumber,
         departmentId
       });
       res.status(201).json({
@@ -224,22 +234,30 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Validate input
-    if (!email || !password) {
+    //Validate input
+    if (!email || !password || typeof password !== "string" || password.length < 6) {
       return res.status(400).json({
         message: "Email and password are required"
       });
     }
 
-    // 2. Normalize email
+    //Normalize email
     const normalizedEmail = email.trim().toLowerCase();
 
     // 3. Find user
     // password is select:false in User schema,
     // so explicitly select it here
-    const user = await User.findOne({
+    let user = await User.findOne({
       email: normalizedEmail
     }).select("+password");
+
+    if (!user) {
+      const instructorEmail = normalizedEmail.match(/^([a-z0-9-]{2,12})@gov\.nu\.edu$/);
+      if (instructorEmail) {
+        const instructor = await Instructor.findOne({ employeeNumber: instructorEmail[1] }).select("userId");
+        user = instructor && await User.findById(instructor.userId).select("+password");
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -247,9 +265,12 @@ const login = async (req, res) => {
       });
     }
 
-    const validEmailDomain = user.role === "student"
-      ? /^[a-z0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
-      : user.role === "instructor" || user.role === "admin"
+const validEmailDomain =
+  user.role === "student"
+    ? /^[0-9]+@stud\.nu\.edu$/.test(normalizedEmail)
+    : user.role === "instructor"
+      ? /^[0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
+      : user.role === "admin"
         ? /^[a-z0-9]+@gov\.nu\.edu$/.test(normalizedEmail)
         : false;
 

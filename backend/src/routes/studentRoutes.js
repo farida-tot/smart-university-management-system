@@ -8,7 +8,8 @@ const {
   updateMyProfile,
   getMyDashboard,
   requestCourse,
-  requestSection
+  requestSection,
+  dropEnrollment
 } = require("../controllers/studentController");
 
 const router = express.Router();
@@ -30,5 +31,6 @@ router.patch(
 router.get("/me/dashboard", authMiddleware, roleMiddleware("student"), getMyDashboard);
 router.post("/me/courses/:courseId/request", authMiddleware, roleMiddleware("student"), requestCourse);
 router.post("/me/sections/:sectionId/request", authMiddleware, roleMiddleware("student"), requestSection);
+router.patch("/me/enrollments/:id/drop", authMiddleware, roleMiddleware("student"), dropEnrollment);
 
 module.exports = router;

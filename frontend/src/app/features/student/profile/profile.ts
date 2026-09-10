@@ -55,4 +55,11 @@ export class Profile implements OnInit {
       .join('')
       .toUpperCase() ?? 'ST';
   }
+
+  dropEnrollment(enrollment: any) {
+    this.studentService.dropEnrollment(enrollment._id).subscribe({
+      next: () => { this.successMessage = 'Enrollment dropped successfully.'; this.loadProfile(); this.studentService.getDashboard().subscribe({ next: dashboard => { this.dashboard = dashboard; this.changeDetector.markForCheck(); } }); },
+      error: error => { this.errorMessage = error.error?.message ?? 'Unable to drop enrollment.'; this.changeDetector.markForCheck(); }
+    });
+  }
 }

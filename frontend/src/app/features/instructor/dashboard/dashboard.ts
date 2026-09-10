@@ -47,31 +47,22 @@ export class Dashboard {
 
   selectSection(section: InstructorSection) { this.activeSection = section; this.successMessage = ''; }
 
-  getAttendance(section: InstructorSection, studentId: string) {
-    const today = new Date().toISOString().slice(0, 10);
-    return section.attendance.find((record) => record.studentId === studentId && record.date.slice(0, 10) === today)?.status ?? '';
-  }
-
-  saveAttendance(section: InstructorSection, studentId: string, status: string) {
-    if (!status) return;
-    this.savingKey = `attendance-${studentId}`;
-    this.instructorService.recordAttendance(section.section._id, { studentId, date: new Date().toISOString(), status }).subscribe({
-      next: () => { this.successMessage = 'Attendance saved.'; this.savingKey = ''; this.loadDashboard(); },
-      error: (error) => { this.errorMessage = error.error?.message ?? 'Unable to save attendance.'; this.savingKey = ''; this.changeDetector.markForCheck(); }
-    });
-  }
-
-  saveGrade(section: InstructorSection, studentId: string, courseworkMarks: number | string, finalExamMarks: number | string) {
+  saveGrade(section: InstructorSection, studentId: string, attendanceMarks: number | string, courseworkMarks: number | string, finalExamMarks: number | string) {
+    const attendance = Number(attendanceMarks);
     const coursework = Number(courseworkMarks);
     const finalExam = Number(finalExamMarks);
-    if (!Number.isInteger(coursework) || coursework < 1 || coursework > 40 || !Number.isInteger(finalExam) || finalExam < 1 || finalExam > 60) return;
+    if (attendanceMarks === '' || courseworkMarks === '' || finalExamMarks === '' || !Number.isInteger(attendance) || attendance < 0 || attendance > 10 || !Number.isInteger(coursework) || coursework < 0 || coursework > 30 || !Number.isInteger(finalExam) || finalExam < 0 || finalExam > 60) {
+      this.errorMessage = 'Enter attendance from 0-10, coursework from 0-30, and final exam from 0-60.';
+      return;
+    }
     this.savingKey = `grade-${studentId}`;
-    this.instructorService.recordCoursework(section.section._id, studentId, coursework, finalExam).subscribe({
-      next: () => { this.successMessage = 'Coursework mark saved.'; this.savingKey = ''; this.loadDashboard(); },
+    this.instructorService.recordCoursework(section.section._id, studentId, attendance, coursework, finalExam).subscribe({
+      next: () => { this.successMessage = 'Marks saved. The final grade updates after all three marks are entered.'; this.savingKey = ''; this.loadDashboard(); },
       error: (error) => { this.errorMessage = error.error?.message ?? 'Unable to save coursework mark.'; this.savingKey = ''; this.changeDetector.markForCheck(); }
     });
   }
 
+  getAttendanceMark(section: InstructorSection, studentId: string) { return section.courseworkGrades.find((grade: any) => grade.studentId === studentId)?.attendanceMarks ?? ''; }
   getCoursework(section: InstructorSection, studentId: string) { return section.courseworkGrades.find((grade: any) => grade.studentId === studentId)?.courseworkMarks ?? ''; }
   getFinalExam(section: InstructorSection, studentId: string) { return section.courseworkGrades.find((grade: any) => grade.studentId === studentId)?.finalExamMarks ?? ''; }
 

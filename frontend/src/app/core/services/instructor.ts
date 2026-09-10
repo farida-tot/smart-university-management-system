@@ -12,12 +12,11 @@ export class InstructorService {
     return this.http.get<InstructorDashboardResponse>(`${this.apiUrl}/me/dashboard`);
   }
 
-  recordAttendance(sectionId: string, data: { studentId: string; date: string; status: string }) {
-    return this.http.put(`${this.apiUrl}/me/sections/${sectionId}/attendance`, data);
-  }
+  getMyProfile() { return this.http.get<any>(`${this.apiUrl}/me`); }
+  updateMyProfile(data: { name?: string; email?: string }) { return this.http.patch(`${this.apiUrl}/me`, data); }
 
-  recordCoursework(sectionId: string, studentId: string, courseworkMarks: number, finalExamMarks: number) {
-    return this.http.put(`${this.apiUrl}/me/sections/${sectionId}/students/${studentId}/coursework`, { courseworkMarks, finalExamMarks });
+  recordCoursework(sectionId: string, studentId: string, attendanceMarks: number, courseworkMarks: number, finalExamMarks: number) {
+    return this.http.put(`${this.apiUrl}/me/sections/${sectionId}/students/${studentId}/coursework`, { attendanceMarks, courseworkMarks, finalExamMarks });
   }
 
   downloadAssignment(id: string): Observable<Blob> {

@@ -19,6 +19,10 @@ export class AuthService {
     );
   }
 
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.http.patch(`${this.apiUrl}/password`, { currentPassword, newPassword });
+  }
+
   saveSession(response: LoginResponse) {
     localStorage.setItem('smart-university-token', response.token);
     localStorage.setItem('smart-university-user', JSON.stringify(response.user));

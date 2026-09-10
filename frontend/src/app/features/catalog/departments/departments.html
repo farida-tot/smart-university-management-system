@@ -1,0 +1,24 @@
+<main class="catalog-page">
+  <header class="catalog-header">
+    <div><p class="eyebrow">Academic directory</p><h1>Departments</h1><p>Explore each academic community and the courses it offers.</p></div>
+    <label class="search-box"><span>Search departments or courses</span><input [(ngModel)]="search" placeholder="Try Computer Science or CS301"></label>
+  </header>
+
+  @if (loading) { <p class="catalog-state">Loading departments...</p> }
+  @if (error) { <p class="catalog-state error">{{ error }}</p> }
+  @if (!loading && !error) {
+    <section class="department-list">
+      @for (department of visibleDepartments; track department._id) {
+        <article class="department-block" [routerLink]="['/departments', department._id]">
+          <div class="department-intro"><span class="department-code">{{ department.code }}</span><h2>{{ department.name }}</h2><p>{{ department.description || 'Academic courses, guidance, and opportunities within this department.' }}</p></div>
+          <div class="course-list">
+            <div class="course-list-heading"><span>Course catalogue</span><strong>{{ department.courses?.length || 0 }} courses</strong></div>
+            @for (course of department.courses; track course._id) {
+              <div class="course-row"><span><strong>{{ course.code }}</strong><span>{{ course.name }}</span></span><span class="course-meta">{{ course.creditHours }} credits</span></div>
+            } @empty { <p class="empty">No courses published yet.</p> }
+          </div>
+        </article>
+      } @empty { <p class="catalog-state">No departments match your search.</p> }
+    </section>
+  }
+</main>

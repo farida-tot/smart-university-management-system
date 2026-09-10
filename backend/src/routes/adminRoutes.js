@@ -7,15 +7,18 @@ const {
   getOverview,
   reviewCourseRequest,
   reviewEnrollment,
+  updateStudent,
   deleteStudent
 } = require("../controllers/adminController");
 
 const router = express.Router();
 
 router.use(authMiddleware, roleMiddleware("admin"));
+
 router.get("/overview", getOverview);
+router.put("/students/:id", updateStudent);
+router.delete("/students/:id", deleteStudent);
 router.patch("/course-requests/:id", reviewCourseRequest);
 router.patch("/enrollments/:id", reviewEnrollment);
-router.delete("/students/:id", deleteStudent);
 
 module.exports = router;

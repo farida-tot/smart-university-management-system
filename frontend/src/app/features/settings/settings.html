@@ -1,0 +1,9 @@
+<main class="settings-page">
+  <header><p class="eyebrow">Account settings</p><h1>Keep your account current.</h1><p>Manage sign-in security and profile details from one place.</p></header>
+  @if (message) { <p class="notice success" role="status">{{ message }}</p> }
+  @if (error) { <p class="notice error" role="alert">{{ error }}</p> }
+  <section class="settings-grid">
+    @if (user?.role === 'instructor') { <form class="settings-panel" (ngSubmit)="saveInstructorProfile()"><h2>Instructor profile</h2><label>Name<input name="name" [(ngModel)]="name" required></label><label>Email<input name="email" [(ngModel)]="email" required></label><small>Email must match your employee number and use @gov.nu.edu.</small><button type="submit">Save profile</button></form> }
+    <form class="settings-panel" (ngSubmit)="changePassword()"><h2>Change password</h2><label>Current password<input name="currentPassword" type="password" [(ngModel)]="currentPassword" required></label><label>New password<input name="newPassword" type="password" [(ngModel)]="newPassword" minlength="6" required></label><button type="submit">Change password</button></form>
+  </section>
+</main>

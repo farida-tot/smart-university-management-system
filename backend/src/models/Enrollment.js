@@ -14,6 +14,12 @@ const enrollmentSchema = new mongoose.Schema(
       required: true
     },
 
+    requestType: {
+      type: String,
+      enum: ["enrollment", "drop"],
+      default: "enrollment"
+    },
+
     status: {
       type: String,
       enum: ["pending", "enrolled", "rejected", "dropped", "completed"],
@@ -22,7 +28,7 @@ const enrollmentSchema = new mongoose.Schema(
 
     grade: {
       type: String,
-      enum: ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "F", null],
+      enum: ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "D", "F", null],
       default: null
     },
 

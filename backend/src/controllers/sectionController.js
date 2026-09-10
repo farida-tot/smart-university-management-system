@@ -4,6 +4,7 @@ const { validateSection, getSlotTimes } = require("../utils/sectionValidation");
 
 const normalizeSchedule = (schedule) => schedule?.map((entry) => ({
   ...entry,
+  room: typeof entry.room === "string" ? entry.room.trim().replace(/\s+/g, " ") : entry.room,
   ...getSlotTimes(entry.slot)
 }));
 
@@ -66,7 +67,7 @@ const updateSection = async (req, res) => {
 
     const updatedSection = await Section.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { ...req.body, schedule: candidate.schedule },
       { new: true, runValidators: true }
     );
     if (!updatedSection) {

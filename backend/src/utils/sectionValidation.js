@@ -115,7 +115,7 @@ const validateSection = async (data, sectionId) => {
           return "Instructor already has another section at this time";
         }
 
-        if (entry.room === existingEntry.room) {
+        if (entry.room.trim().replace(/\s+/g, " ") === existingEntry.room.trim().replace(/\s+/g, " ")) {
           return "Room is already booked at this time";
         }
       }

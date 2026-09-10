@@ -1,0 +1,13 @@
+<main class="department-detail-page">
+  @if (error) { <p class="state error">{{ error }}</p> }
+  @if (!department && !error) { <p class="state">Loading department...</p> }
+  @if (department) {
+    <a class="back-link" routerLink="/departments">← All departments</a>
+    <header class="detail-header"><span>{{ department.code }}</span><h1>{{ department.name }}</h1><p>{{ department.description || 'Explore the courses and teaching community in this department.' }}</p></header>
+    <section class="course-detail-list"><div class="section-label"><span>Course catalogue</span><strong>{{ department.courses?.length || 0 }} courses</strong></div>
+      @for (course of department.courses; track course._id) {
+        <article class="course-detail"><div class="course-title"><span>{{ course.code }}</span><h2>{{ course.name }}</h2><strong>{{ course.creditHours }} credit hours</strong></div><p>{{ course.description || 'Course description will be published by the department.' }}</p><div class="instructor-line"><span>Instructors</span><strong>{{ instructorNames(course) }}</strong></div></article>
+      } @empty { <p class="state">No courses have been published for this department yet.</p> }
+    </section>
+  }
+</main>
